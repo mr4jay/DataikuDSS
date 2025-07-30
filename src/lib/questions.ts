@@ -6,6 +6,7 @@ import { smeQuestions } from './sme-questions';
 import { dataPrepQuestions } from './data-prep-questions';
 import { mlQuestions } from './ml-questions';
 import { automationQuestions } from './automation-questions';
+import { advancedTopicsQuestions } from './advanced-topics-questions';
 
 export interface Question {
   id: number;
@@ -51,6 +52,10 @@ const allSections: QuestionSection[] = [
   {
     title: 'SME Questions',
     questions: smeQuestions,
+  },
+  {
+    title: 'Advanced Topics',
+    questions: advancedTopicsQuestions,
   }
 ];
 
