@@ -644,7 +644,7 @@ Large Docker images can slow down job startup times as they take longer to pull.
 A service mesh is a dedicated infrastructure layer for managing service-to-service communication in a microservices architecture. It provides features like traffic management, security, and observability.
 
 ### 2. Use with Dataiku
-When Dataiku is deployed on Kubernetes, especially in a complex environment with many API nodes and containerized jobs, a service mesh can be very valuable.
+- When Dataiku is deployed on Kubernetes, especially in a complex environment with many API nodes and containerized jobs, a service mesh can be very valuable.
 - **mTLS Encryption:** It can automatically encrypt all traffic between Dataiku pods using mutual TLS (mTLS), providing strong security.
 - **Traffic Management:** It can handle advanced traffic routing for canary deployments or A/B testing of Dataiku APIs without needing a separate API gateway.
 - **Observability:** It automatically captures detailed metrics, logs, and traces for all traffic flowing between Dataiku components, providing deep insights into performance and errors.
@@ -675,5 +675,709 @@ To get buy-in for refactoring, you need to translate technical debt into busines
 1.  **Measure Pipeline Runtimes:** Track the execution time of your production scenarios. If the runtime is steadily increasing due to inefficient design, you can quantify this in terms of delayed data availability or increased cloud compute costs. "This pipeline now takes 3 hours to run, costing us $X per day. A refactor could cut this to 30 minutes."
 2.  **Track Failure Rates:** Monitor the failure rate of your production scenarios. If a brittle, poorly designed Flow fails frequently, you can quantify the cost of the manual interventions required to fix it each time. "The marketing pipeline fails on average twice a week, requiring 4 hours of a data scientist's time to fix it manually each time."
 3.  **Measure Time to Change:** When a business stakeholder requests a change, track how long it takes to implement in a debt-ridden project versus a clean one. "A simple logic change took 3 days to implement because of the complex, undocumented Python recipe. In a clean project, this would be a 2-hour task."`,
+  },
+  {
+    id: 426,
+    slug: 'dss-and-cloud-iam-best-practices',
+    question: 'What are the best practices for configuring Cloud IAM roles/permissions for Dataiku?',
+    answer: `### 1. Introduction/Overview
+Configuring cloud Identity and Access Management (IAM) correctly is crucial for security. The principle of least privilege should always be applied.
+
+### 2. Best Practices
+1.  **Use Roles, Not Keys:** Whenever possible, use IAM Roles (for AWS), Managed Identities (for Azure), or Service Accounts (for GCP) that are attached to the Dataiku virtual machines. This avoids storing long-lived access keys.
+2.  **Create Specific Roles:** Create distinct roles for different purposes. For example, a role for accessing S3, another for interacting with SageMaker.
+3.  **Scoped-Down Policies:** Do not grant broad permissions like \`S3:* \`. The policy should only allow the specific actions needed (e.g., \`s3:GetObject\`, \`s3:PutObject\`) and only on specific resources (e.g., \`arn:aws:s3:::my-project-bucket/*\`).
+4.  **Use a Dedicated Role for the DSS Instance:** The Dataiku instance itself should run with a role that only has the permissions it needs to operate, which might be different from the roles used by user jobs.`,
+  },
+  {
+    id: 427,
+    slug: 'dss-and-data-mesh',
+    question: 'How does Dataiku fit into a "Data Mesh" architecture?',
+    answer: `### 1. Introduction/Overview
+Data Mesh is a decentralized architectural and organizational paradigm where data is treated as a product, owned and managed by domain-oriented teams.
+
+### 2. Dataiku's Role in a Data Mesh
+Dataiku is an excellent tool for implementing a data mesh.
+- **As a Data Product Platform:** Each domain team can use their own Dataiku project (or group of projects) to build, manage, and serve their "data products."
+- **Federated Governance:** Dataiku's project-level permissions and governance features allow for federated governance, where domain teams manage their own products, but central policies can still be applied.
+- **Discoverability:** The Data Catalog acts as the discovery layer for the data mesh, allowing teams to find and consume data products from other domains.
+- **Self-Service:** Dataiku provides the self-service tooling that domain teams need to independently develop and maintain their data products from end to end.`,
+  },
+  {
+    id: 428,
+    slug: 'cost-control-for-containerized-execution',
+    question: 'How can you control costs with containerized execution on Kubernetes?',
+    answer: `### 1. Introduction/Overview
+While scalable, containerized execution can become expensive if not managed.
+
+### 2. Cost Control Mechanisms
+1.  **Resource Quotas and LimitRanges:** Use Kubernetes namespaces to group users or teams and apply ResourceQuotas to limit the total amount of CPU and memory they can consume. Use LimitRanges to enforce default resource requests and limits on pods.
+2.  **Use a Cluster Autoscaler with Spot Instances:** Configure your Kubernetes cluster to use a mix of on-demand and spot/preemptible instances. The cluster autoscaler can be configured to favor cheaper spot instances for batch jobs.
+3.  **Taints and Tolerations:** Use taints and tolerations to create dedicated node pools. For example, you can have a node pool of expensive GPU instances and taint it so that only jobs that explicitly "tolerate" that taint (i.e., actually need a GPU) can be scheduled there.
+4.  **Monitoring and Showback:** Use monitoring tools like Kubecost or OpenCost to get detailed visibility into which projects and users are consuming the most resources, enabling you to "show back" the costs to the relevant teams.`,
+  },
+  {
+    id: 429,
+    slug: 'dss-and-feature-flags',
+    question: 'How can feature flags be used to safely roll out new pipeline logic?',
+    answer: `### 1. Introduction/Overview
+Feature flags (or feature toggles) are a mechanism to turn parts of your application's logic on or off at runtime without deploying new code.
+
+### 2. Use in Dataiku Pipelines
+1.  **Store Flag in a Variable:** The state of the feature flag (e.g., \`use_new_logic = true/false\`) can be stored as a Dataiku project variable or, for more dynamic control, in an external service like LaunchDarkly.
+2.  **Conditional Logic in Recipe:** In your recipe (e.g., a Python recipe), you would have conditional logic:
+    \`\`\`python
+    import dataiku
+    use_new_logic = dataiku.get_custom_variables().get('use_new_logic')
+
+    if use_new_logic:
+        # Run the new, experimental logic
+        df_out = new_logic(df_in)
+    else:
+        # Run the old, stable logic
+        df_out = old_logic(df_in)
+    \`\`\`
+3.  **Safe Rollout:** This allows you to deploy the new code to production but keep it "off" by default. You can then turn it "on" for a small subset of data, and if it works as expected, roll it out more broadly by simply changing the variable, without needing a new deployment.`,
+  },
+  {
+    id: 430,
+    slug: 'dss-and-open-telemetry',
+    question: 'How can Dataiku be integrated with OpenTelemetry?',
+    answer: `### 1. Introduction/Overview
+OpenTelemetry (OTel) is an open-source observability framework for collecting traces, metrics, and logs. Integrating Dataiku with OTel provides deep visibility into pipeline performance.
+
+### 2. Integration Strategy
+- This is an advanced integration that requires custom instrumentation.
+- **In Python Recipes:** You can use the OpenTelemetry SDK for Python. At the start of a recipe, you would start a "span," add attributes (like the project key and recipe name), and then end the span when the recipe finishes. This would send trace data to an OTel collector.
+- **Using a Java Agent:** A more advanced method involves attaching the OpenTelemetry Java agent to the Dataiku backend process. This can automatically instrument Java-based operations, providing traces and metrics for things like dataset I/O and recipe execution without needing to modify recipe code. This provides a much deeper level of observability.`,
+  },
+  {
+    id: 431,
+    slug: 'real-time-vs-batch-features',
+    question: 'What is the challenge of consistency between real-time and batch features, and how can it be solved?',
+    answer: `### 1. The Challenge: Training-Serving Skew
+This is a classic MLOps problem. Your batch training pipeline might calculate a feature like "customer's 30-day average purchase value" using a complex SQL query. Your real-time API needs to calculate the *exact same feature* with low latency. If the two calculations are implemented differently (e.g., one in SQL, one in Python), they can produce different results, which will degrade model performance.
+
+### 2. The Solution: A Feature Store
+A feature store is designed to solve this problem.
+1.  **Centralized Feature Definition:** The feature logic is defined once (e.g., in a Dataiku recipe).
+2.  **Dual Storage:** When the feature is computed, the feature store writes the result to two places:
+    - **An Offline Store** (e.g., Snowflake, BigQuery) for creating training datasets.
+    - **An Online Store** (e.g., Redis, DynamoDB), which is a low-latency key-value store.
+3.  **Serving:** The real-time prediction API fetches the pre-computed feature from the fast online store instead of recalculating it. This guarantees consistency and low latency. Dataiku can be used to build the pipelines that populate such a feature store.`,
+  },
+  {
+    id: 432,
+    slug: 'write-audit-publish-pattern',
+    question: 'What is the "Write-Audit-Publish" pattern for data pipelines?',
+    answer: `### 1. Introduction/Overview
+This is a robust pattern for ensuring data quality in production pipelines. It separates the data creation step from the step that makes it visible to consumers.
+
+### 2. How it Works
+1.  **Write:** Your main pipeline runs and writes its output to a temporary or staging table (e.g., \`daily_summary_staging\`).
+2.  **Audit:** A separate, subsequent process runs a series of data quality checks and validation tests on this staging table.
+3.  **Publish:** If and only if all the audit checks pass, a final step is executed. This step "publishes" the data by either moving it to the final production table (e.g., \`RENAME TABLE daily_summary_staging TO daily_summary\`) or by updating a view to point to the new staging table.
+
+If the audit fails, the publish step is skipped, and the downstream consumers continue to see the last known good version of the data. This prevents bad data from ever reaching production users.`,
+  },
+  {
+    id: 433,
+    slug: 'idempotency-in-data-pipelines',
+    question: 'Why is idempotency important for data pipelines, and how do you achieve it?',
+    answer: `### 1. Introduction/Overview
+An **idempotent** operation is one that can be run multiple times with the same input and will produce the same result, without causing additional side effects. This is crucial for data pipeline reliability. If a job fails halfway through and needs to be rerun, an idempotent design ensures that this doesn't corrupt the data (e.g., by inserting duplicate rows).
+
+### 2. How to Achieve Idempotency
+- **Use Partitioning:** When writing to a partitioned dataset, Dataiku's build process is idempotent. If you rerun a job for a specific day's partition, it will overwrite that partition, not append to it.
+- **Use \`INSERT OVERWRITE\`:** When writing to a database table, instead of using \`INSERT INTO\`, configure the recipe to use a pattern that deletes the old data before inserting the new data (e.g., \`TRUNCATE\` followed by \`INSERT\`, or using a staging table and a rename).
+- **Avoid Append-Only Operations in Rerunnable Jobs:** Be very careful with jobs that only append data. They are not naturally idempotent and can create duplicates if rerun.`,
+  },
+  {
+    id: 434,
+    slug: 'dss-and-cloud-vpn-peering',
+    question: 'How do you securely connect a Dataiku instance in one VPC to a database in another VPC?',
+    answer: `### 1. Introduction/Overview
+It's a common security practice to isolate databases in their own network. To connect across these networks, you use specific cloud networking features.
+
+### 2. Connection Methods
+- **VPC Peering (or VNet Peering):** This connects two VPCs together, making them behave as if they are on the same network. It's a simple and performant option.
+- **Transit Gateway (AWS):** For more complex scenarios where you need to connect many VPCs, a Transit Gateway acts as a central hub. It simplifies network management compared to a full mesh of peering connections.
+- **PrivateLink / Private Service Connect:** This is the most secure method. It exposes the database as a private endpoint directly inside your Dataiku VPC, without needing to peer the entire networks. This provides a one-way, highly secure connection with no risk of exposing other resources.`,
+  },
+  {
+    id: 435,
+    slug: 'what-is-model-quantization',
+    question: 'What is model quantization and when is it useful?',
+    answer: `### 1. Introduction/Overview
+Model quantization is the process of reducing the precision of a model's weights and/or activations from a higher precision format (like 32-bit floating point, FP32) to a lower precision one (like 8-bit integer, INT8).
+
+### 2. Benefits and Use Cases
+- **Reduced Model Size:** A quantized model can be 4x smaller, which is very useful for deploying large models on edge devices with limited storage.
+- **Faster Inference:** Computations with lower-precision integers are much faster on many CPUs and specialized hardware (like TPUs or mobile NPUs). This leads to lower latency for real-time APIs.
+- **Lower Power Consumption:** Integer arithmetic consumes less power, which is critical for battery-powered devices.
+
+The trade-off is a potential small loss in model accuracy, which must be carefully measured. Deep learning frameworks like TensorFlow and PyTorch have built-in tools for performing post-training quantization.`,
+  },
+  {
+    id: 436,
+    slug: 'what-is-model-pruning',
+    question: 'What is model pruning and how does it optimize models?',
+    answer: `### 1. Introduction/Overview
+Model pruning is a technique to reduce the size and complexity of a trained neural network by removing (or "pruning") weights or connections that are deemed unnecessary or have a small impact on the model's performance.
+
+### 2. How it Works
+- After a model is trained, a pruning algorithm analyzes its weights.
+- It identifies weights with small magnitudes (close to zero) and permanently sets them to zero.
+- This creates a "sparse" model with fewer active connections.
+- Often, the model is then fine-tuned for a few more epochs to recover any accuracy lost during pruning.
+
+### 3. Benefits
+- **Reduces Model Size:** A pruned model can be compressed more effectively, leading to a smaller file size.
+- **Speeds up Inference:** It can lead to faster predictions because there are fewer computations to perform. This is especially true on hardware that can take advantage of sparse matrix operations.`,
+  },
+  {
+    id: 437,
+    slug: 'what-is-knowledge-distillation',
+    question: 'What is knowledge distillation?',
+    answer: `### 1. Introduction/Overview
+Knowledge distillation is a model compression technique where a large, complex model (the "teacher") is used to train a smaller, more efficient model (the "student").
+
+### 2. How it Works
+1.  First, you train a large, highly accurate but slow teacher model.
+2.  Then, you train the smaller student model. The student's goal is not just to predict the correct labels from the training data, but also to mimic the full probability distribution of the teacher model's outputs (its "soft labels").
+3.  By learning from the teacher's nuanced probability outputs, the student can often achieve a much higher accuracy than if it were trained on the hard labels alone.
+
+### 3. Use Case
+This is a powerful technique for creating small, fast models for deployment on mobile or edge devices that retain most of the accuracy of a much larger, state-of-the-art model.`,
+  },
+  {
+    id: 438,
+    slug: 'dss-and-cloud-registries',
+    question: 'How do you configure Dataiku to use a private container registry (like ECR, ACR, or GCR)?',
+    answer: `### 1. Introduction/Overview
+For containerized execution, Dataiku needs to pull Docker images. In a production environment, these images should be stored in a private, secure container registry, not Docker Hub.
+
+### 2. Configuration
+1.  **Authentication:** The Kubernetes cluster where jobs will run must be configured to authenticate with the private registry.
+    - **AWS ECR:** This is typically done by giving the EKS node's IAM role the necessary permissions to pull from ECR.
+    - **Azure ACR:** You can attach the ACR to the AKS cluster.
+    - **Google GCR/AR:** The GKE node's service account needs the Storage Object Viewer role.
+2.  **Image Naming:** In Dataiku's code environment settings, when you specify the Docker image to use, you provide the full image path, including the registry name (e.g., \`123456789012.dkr.ecr.us-east-1.amazonaws.com/my-dss-image:latest\`).
+3.  **Pushing Images:** Your CI/CD pipeline is responsible for building the custom Docker images and pushing them to the private registry, where they become available for Dataiku to use.`,
+  },
+  {
+    id: 439,
+    slug: 'dataiku-and-terraform-cloud',
+    question: 'How would you use Terraform Cloud or Spacelift to manage a Dataiku deployment?',
+    answer: `### 1. Introduction/Overview
+Terraform Cloud and Spacelift are management platforms for Terraform that provide features like remote state storage, collaborative workflows, and policy enforcement. They are ideal for managing a Dataiku deployment as part of a team.
+
+### 2. Workflow
+1.  **VCS-Driven Workflow:** Your Terraform code for the Dataiku infrastructure is stored in a Git repository.
+2.  **Pull Request Plan:** When a team member opens a pull request with a change to the infrastructure (e.g., resizing a VM), Terraform Cloud automatically runs a \`terraform plan\` and posts the output as a comment on the PR.
+3.  **Policy as Code:** You can use a framework like Open Policy Agent (OPA) to enforce policies. For example, a policy could prevent a user from creating an overly large and expensive database instance.
+4.  **Collaborative Apply:** After the PR is reviewed and approved, the changes can be applied, with the full log stored in Terraform Cloud for auditing. This provides a safe, collaborative, and auditable way to manage your Dataiku infrastructure.`,
+  },
+  {
+    id: 440,
+    slug: 'dss-and-ssh-tunnels',
+    question: 'When and why would you use an SSH tunnel to connect Dataiku to a database?',
+    answer: `### 1. Introduction/Overview
+An SSH tunnel is a way to securely forward network traffic from one machine to another over an encrypted SSH connection. It's often used as a "poor man's VPN" to access a database that is not directly exposed to the internet.
+
+### 2. Use Case
+- Imagine you have a database running on a server in a private network.
+- There is a "bastion" or "jump" host at the edge of the network that is accessible via SSH.
+- The Dataiku server cannot connect directly to the database, but it can connect to the bastion host.
+- **How it works:** You can configure the Dataiku connection to first establish an SSH connection to the bastion host. It then "tunnels" the database traffic through this encrypted connection to the private database server.
+This provides a secure way to access isolated resources without requiring complex VPC peering or VPN setups.`,
+  },
+  {
+    id: 441,
+    slug: 'dss-and-reverse-proxy-config',
+    question: 'What are the key configuration settings for a reverse proxy (like Nginx) in front of Dataiku?',
+    answer: `### 1. Introduction/Overview
+A reverse proxy is a critical component in a production Dataiku deployment.
+
+### 2. Key Nginx Configuration Directives
+- **SSL/TLS Termination:** The proxy handles the HTTPS connection. The \`ssl_certificate\` and \`ssl_certificate_key\` directives are configured here.
+- **Proxy Pass:** The \`proxy_pass\` directive forwards the traffic to the Dataiku backend (e.g., \`http://localhost:11000\`).
+- **Header Forwarding:** It's crucial to forward the correct headers so Dataiku knows the original client's details. Key headers to set are \`X-Forwarded-For\`, \`X-Forwarded-Proto\`, and \`X-Forwarded-Host\`.
+- **WebSocket Support:** Dataiku's notebooks and other interactive features use WebSockets. The configuration must include specific directives (\`proxy_http_version 1.1\`, \`proxy_set_header Upgrade $http_upgrade\`, \`proxy_set_header Connection "upgrade"\`) to handle this traffic correctly.
+- **Client Max Body Size:** You need to set \`client_max_body_size\` to a large value (e.g., \`10G\`) to allow users to upload large files.`,
+  },
+  {
+    id: 442,
+    slug: 'what-is-a-canary-deployment-for-apis',
+    question: 'What is a canary deployment for APIs?',
+    answer: `### 1. Introduction/Overview
+A canary deployment is a technique for rolling out a new version of an API to a small subset of users before making it available to everyone. It's a risk-reduction strategy.
+
+### 2. How it Works
+1.  You have version 1 of your model API running in production, handling 100% of the traffic.
+2.  You deploy version 2 alongside it.
+3.  You configure your router or API gateway to send a small fraction of the live traffic (e.g., 1% or 5%) to version 2, while the other 99% still goes to version 1.
+4.  You carefully monitor the performance and error rates of version 2. If it's healthy, you gradually increase the traffic it receives (e.g., to 10%, then 50%, then 100%).
+5.  If at any point version 2 shows problems, you can immediately route all traffic back to version 1.
+This allows you to detect problems with a new release with minimal impact on your users.`,
+  },
+  {
+    id: 443,
+    slug: 'dss-and-cicd-for-plugins',
+    question: 'What does a CI/CD pipeline for a Dataiku plugin look like?',
+    answer: `### 1. Introduction/Overview
+Just like any other piece of software, custom Dataiku plugins should have their own automated CI/CD pipeline.
+
+### 2. Pipeline Stages
+1.  **Lint and Test:** When a developer pushes a change to the plugin's Git repository, the pipeline triggers. The first stage runs a linter (like \`flake8\` for Python) and executes any unit tests (using \`pytest\`).
+2.  **Build Plugin:** The pipeline uses the Dataiku command-line tools to build the plugin into a \`.zip\` file.
+3.  **Deploy to Test Instance:** The plugin zip file is deployed to a dedicated test/QA Dataiku instance.
+4.  **Run Integration Tests:** The pipeline then runs a test project on the QA instance that is specifically designed to use the plugin's features. This ensures the plugin works correctly within a real Dataiku environment.
+5.  **Release:** If all tests pass, the pipeline can automatically create a new release on GitHub and upload the plugin zip file as a release artifact, making it available for administrators to install on production instances.`,
+  },
+  {
+    id: 444,
+    slug: 'dss-and-git-submodules',
+    question: 'Can I use Git submodules with a Dataiku project?',
+    answer: `### 1. Introduction/Overview
+A Git submodule allows you to keep a Git repository as a subdirectory of another Git repository. This is a way to include and track versioned external code within your main project.
+
+### 2. Use Case with Dataiku
+- A common use case is for sharing a common library of Python code across multiple Dataiku projects.
+1.  You would have a separate Git repository that contains your shared Python library.
+2.  In your Dataiku project's Git repository, you would add this library repository as a submodule.
+3.  In the project settings, you would add the submodule's directory to the Python path.
+4.  Now, your recipes can import and use the shared library, and the project's main Git repository tracks which specific version (commit) of the library it's using. This is a more formal and version-controlled way of sharing code than just copying files.`,
+  },
+  {
+    id: 445,
+    slug: 'what-is-a-data-lakehouse',
+    question: 'What is a "Data Lakehouse" and how does Dataiku support this architecture?',
+    answer: `### 1. Introduction/Overview
+A Data Lakehouse is a modern data architecture that combines the low-cost, flexible storage of a data lake with the transactional features and performance of a data warehouse. Key technologies that enable this are Delta Lake, Apache Iceberg, and Apache Hudi.
+
+### 2. How Dataiku Supports it
+- Dataiku can read from and write to these open table formats. For example, Dataiku has a native connector for Delta Lake.
+- You can use a Dataiku Flow to ingest raw data into a data lake (like S3), and then use Spark recipes to transform it and save it as a Delta Lake table.
+- This Delta Lake table can then be queried with high performance by other tools, and it supports ACID transactions, which prevents data corruption.
+- This allows you to build a reliable, high-performance data platform on top of open-source formats in a data lake, and Dataiku acts as the primary tool for building and managing the pipelines.`,
+  },
+  {
+    id: 446,
+    slug: 'dss-and-chaos-monkey',
+    question: 'How could you use a tool like Chaos Monkey to test a high-availability Dataiku deployment?',
+    answer: `### 1. Introduction/Overview
+Chaos Monkey is a tool invented by Netflix that embodies the principles of chaos engineering. It runs in your production environment and randomly terminates virtual machine instances and containers.
+
+### 2. Testing an HA Dataiku Deployment
+- By letting Chaos Monkey run in your production environment, you are continuously testing the resilience of your HA setup.
+- If you have multiple Dataiku backend pods running behind a load balancer, Chaos Monkey might randomly terminate one of them.
+- A resilient system would see the load balancer detect the failure and redirect traffic to the healthy pods, with users experiencing no interruption. The Kubernetes cluster would automatically spin up a new pod to replace the terminated one.
+- If this process fails, it reveals a weakness in your HA configuration that you need to fix. This proactive testing is far more effective than waiting for a real failure to occur.`,
+  },
+  {
+    id: 447,
+    slug: 'dss-and-vector-databases',
+    question: 'How can Dataiku be used with vector databases (like Pinecone or Weaviate)?',
+    answer: `### 1. Introduction/Overview
+Vector databases are specialized databases designed to store and query high-dimensional vector embeddings, which are the outputs of deep learning models. They are essential for applications like semantic search, recommendation systems, and Retrieval-Augmented Generation (RAG).
+
+### 2. Integration Workflow
+1.  **Generate Embeddings:** In a Dataiku Python recipe, you would use a model (e.g., from Hugging Face or OpenAI) to convert your data (like product descriptions or documents) into vector embeddings.
+2.  **Load into Vector DB:** Use another Python recipe with the vector database's client library (e.g., \`pinecone-client\`) to load these embeddings and their associated metadata into the database.
+3.  **Query for Similarity:** In a different recipe or a webapp, you can take a new query, convert it to an embedding, and then use the client library to query the vector database. The database will return the most similar items from its index, enabling powerful semantic search applications to be built on top of Dataiku.`,
+  },
+  {
+    id: 448,
+    slug: 'dss-and-graph-neural-networks',
+    question: 'How would you implement a workflow for a Graph Neural Network (GNN) in Dataiku?',
+    answer: `### 1. Introduction/Overview
+GNNs are a type of neural network designed to work on graph-structured data. A workflow in Dataiku would involve data preparation, model training, and inference.
+
+### 2. Workflow Steps
+1.  **Graph Construction:** Start with tabular data (e.g., a list of users and a list of their transactions). Use Python recipes with libraries like \`NetworkX\` to construct the graph structure.
+2.  **Feature Engineering:** Prepare the features for the nodes and edges of the graph.
+3.  **Training Recipe:** In a Python recipe (in a GPU-enabled environment), use a GNN library like \`PyTorch Geometric\` or \`DGL\`. You would load your graph data, define your GNN model architecture, and run the training loop. The trained model artifact would be saved to a managed folder.
+4.  **Inference Recipe:** A final Python recipe would load the trained GNN model, take a graph or subgraph as input, and perform inference tasks like node classification (e.g., identifying fraudulent users) or link prediction (e.g., recommending new connections).`,
+  },
+  {
+    id: 449,
+    slug: 'dss-and-reinforcement-learning',
+    question: 'How could Dataiku be used to manage a reinforcement learning (RL) workflow?',
+    answer: `### 1. Introduction/Overview
+RL is a complex field that involves training an "agent" to make decisions in an "environment" to maximize a reward. Dataiku can serve as the platform for managing the data and orchestration around the RL process.
+
+### 2. Workflow Components
+1.  **Environment Simulation:** You might use a Python recipe to simulate the environment where the agent will operate (e.g., a simulated market for a trading bot).
+2.  **Data Logging:** All the interactions between the agent and the environment (state, action, reward) are logged to Dataiku datasets.
+3.  **Policy Training:** A Python recipe (often requiring GPUs) would read this interaction data and use an RL library (like \`Stable Baselines3\` or \`RLlib\`) to train or update the agent's policy model.
+4.  **Policy Deployment:** The trained policy model is stored as an artifact in a managed folder.
+5.  **Evaluation:** Another scenario would use this new policy in the simulation to evaluate its performance, with the results being logged for analysis. Dataiku orchestrates this entire "data flywheel."`,
+  },
+  {
+    id: 450,
+    slug: 'dss-and-large-language-models-llms',
+    question: 'What are the patterns for using Large Language Models (LLMs) in Dataiku?',
+    answer: `### 1. Introduction/Overview
+LLMs from providers like OpenAI, Cohere, or through Hugging Face can be integrated into Dataiku pipelines.
+
+### 2. Common Patterns
+1.  **Prompt Engineering in a Recipe:** The most common pattern. A Python recipe takes a dataset as input. For each row, it constructs a "prompt" from the row's data and sends it to the LLM's API. The recipe then parses the text response from the LLM and saves it as a new column in the output dataset. This is used for tasks like summarization, classification, or data extraction.
+2.  **Fine-Tuning:** A more advanced pattern. You use a labeled dataset in Dataiku to fine-tune a smaller, open-source LLM (like Llama or Falcon) on a specific task. This involves using a Python recipe in a GPU environment and libraries from Hugging Face.
+3.  **Retrieval-Augmented Generation (RAG):** This pattern combines an LLM with a vector database. A Dataiku pipeline is used to create and update the vector database with your private documents. A webapp then uses this to build a chatbot that can answer questions about your documents by retrieving relevant context and feeding it to the LLM as part of the prompt.`,
+  },
+  {
+    id: 451,
+    slug: 'dss-and-model-serving-optimization',
+    question: 'What are some advanced strategies for optimizing model serving performance?',
+    answer: `### 1. Introduction/Overview
+For high-throughput, low-latency APIs, several optimizations can be applied.
+
+### 2. Advanced Strategies
+- **Hardware Acceleration:** Use GPUs or other specialized hardware (like AWS Inferentia) for model inference. This requires deploying the API node on the appropriate instance type and using a model compiled for that hardware.
+- **Model Compilation:** Use a model compiler like ONNX Runtime or TensorRT. These tools take a trained model and perform optimizations (like layer fusion) to create a highly efficient inference engine for a specific hardware target.
+- **Batching:** For some models, it can be more efficient to batch multiple incoming requests together and run them through the model simultaneously, rather than one by one. This increases throughput, though it can slightly increase latency.
+- **Caching:** If the same requests are received frequently, you can cache the model's predictions in a fast in-memory store like Redis to avoid re-running the model unnecessarily.`,
+  },
+  {
+    id: 452,
+    slug: 'dss-and-automated-incident-response',
+    question: 'How can you automate incident response for a failing production pipeline?',
+    answer: `### 1. Introduction/Overview
+Automated incident response goes beyond just sending an alert; it involves taking action to diagnose or mitigate the issue.
+
+### 2. Automated Workflow
+1.  **Failure Detection:** A production scenario fails due to a data quality check violation.
+2.  **Alerting:** The first reporter sends an alert to the on-call channel in Slack or PagerDuty.
+3.  **Automated Diagnostics:** A second reporter triggers another Dataiku scenario. This "diagnostic" scenario uses the Dataiku API to fetch the logs from the failed job, identify the specific data quality check that failed, and pull a sample of the invalid rows.
+4.  **Enriching the Ticket:** The diagnostic scenario then calls the Jira or ServiceNow API to update the incident ticket with this detailed information (log snippets, sample bad data).
+This gives the on-call engineer all the information they need to quickly diagnose the root cause without having to manually log into multiple systems.`,
+  },
+  {
+    id: 453,
+    slug: 'dss-and-cloud-cost-management-tools',
+    question: 'How can Dataiku be used with cloud cost management tools like Cloudability or CloudHealth?',
+    answer: `### 1. Introduction/Overview
+These tools provide detailed visibility into cloud spending. Dataiku can both provide data to and consume data from them.
+
+### 2. Integration
+- **Enriching Cost Data:** These tools rely on good resource tagging. You can use Dataiku to connect to cloud APIs and automatically enforce tagging policies or identify untagged resources.
+- **Analyzing Cost Data:** These tools have their own dashboards, but you can also ingest their detailed billing reports into Dataiku for more advanced, custom analysis. For example, you could join the cost data with performance metrics from your applications to calculate the cost per transaction or the cost per prediction for a model. This provides a much deeper level of financial insight.`,
+  },
+  {
+    id: 454,
+    slug: 'dss-and-zero-downtime-upgrades',
+    question: 'How can a zero-downtime upgrade of a Dataiku instance be achieved?',
+    answer: `### 1. Introduction/Overview
+This is a very advanced procedure that uses a blue-green deployment strategy for the entire Dataiku instance.
+
+### 2. Workflow
+1.  **Blue Environment:** Your current production Dataiku instance is running in the "blue" environment.
+2.  **Provision Green Environment:** You use your Infrastructure-as-Code scripts (Terraform/Ansible) to spin up a completely new, parallel "green" environment.
+3.  **Install New Version:** You install the new version of Dataiku on this green environment.
+4.  **Restore a Backup:** You restore a recent backup of the production Data Directory and database to the green environment.
+5.  **Run Tests:** You run a suite of tests on the green environment to ensure everything is working correctly.
+6.  **Switch Traffic:** You update your DNS or load balancer to redirect all user traffic from the blue environment to the green one.
+7.  **Decommission Blue:** After a period of monitoring, if the green environment is stable, you can decommission the old blue environment. This provides a seamless upgrade with no downtime for users.`,
+  },
+  {
+    id: 455,
+    slug: 'dss-and-cloud-security-posture-management',
+    question: 'How does Cloud Security Posture Management (CSPM) relate to a Dataiku deployment?',
+    answer: `### 1. Introduction/Overview
+CSPM tools (like Wiz, Palo Alto Prisma Cloud, or native cloud tools) continuously scan your cloud environment for security misconfigurations and compliance violations.
+
+### 2. Relevance to Dataiku
+- A CSPM tool would automatically monitor the infrastructure that Dataiku is running on.
+- It can detect issues like:
+    - A security group that is open to the world.
+    - An S3 bucket containing sensitive data that is publicly accessible.
+    - A database that is not encrypted at rest.
+    - An IAM role with excessive permissions.
+- By providing continuous visibility into these kinds of security risks, a CSPM tool is essential for maintaining a secure Dataiku deployment in the cloud.`,
+  },
+  {
+    id: 456,
+    slug: 'dss-and-web-application-firewalls-waf',
+    question: 'Should a Web Application Firewall (WAF) be used with Dataiku?',
+    answer: `### 1. Introduction/Overview
+A WAF is a type of firewall that operates at the application layer (HTTP) to protect against common web-based attacks.
+
+### 2. Use with Dataiku
+- Yes, placing a WAF (like AWS WAF, Azure Application Gateway WAF, or Cloudflare) in front of your Dataiku instance is a strong security best practice, especially for internet-facing deployments.
+- A WAF can help protect Dataiku from attacks like:
+    - **SQL Injection:** Attempts to manipulate database queries.
+    - **Cross-Site Scripting (XSS):** Attempts to inject malicious scripts into the web interface.
+    - **Denial-of-Service (DoS) Attacks:** By providing rate-limiting capabilities.
+- It adds an important layer of defense-in-depth to your security posture.`,
+  },
+  {
+    id: 457,
+    slug: 'dss-and-docker-in-docker',
+    question: 'What is the "Docker-in-Docker" problem and how does it relate to containerized execution?',
+    answer: `### 1. The Problem
+This refers to the challenge of running a Docker client or daemon inside a Docker container. In the context of Dataiku, this can become complex if Dataiku itself is running in a container and then needs to launch *other* containers for recipe execution.
+
+### 2. The Solution: Socket Mounting
+- The standard and most secure way to solve this is to avoid running a full Docker daemon inside the Dataiku container.
+- Instead, you mount the host machine's Docker socket (\`/var/run/docker.sock\`) as a volume into the Dataiku container.
+- This allows the Dataiku process inside the container to communicate with the host's Docker daemon. When Dataiku needs to run a recipe, it tells the host daemon to launch a new "sibling" container alongside the Dataiku container, rather than a "child" container inside it.
+- This is the standard configuration when using containerized execution without Kubernetes.`,
+  },
+  {
+    id: 458,
+    slug: 'dss-and-continuous-model-training',
+    question: 'What is the difference between scheduled retraining and continuous training for a model?',
+    answer: `### 1. Introduction/Overview
+Both are strategies for keeping models up-to-date, but they have different triggers and use cases.
+
+### 2. Comparison
+- **Scheduled Retraining (Most Common):**
+    - The model is retrained on a fixed schedule (e.g., every day, week, or month).
+    - This is implemented with a standard Dataiku scenario with a time-based trigger.
+    - **Use Case:** Good for most business problems where the underlying patterns don't change extremely rapidly.
+- **Continuous Training (or Online Learning):**
+    - The model is updated in near real-time, every time a new data point (or a small batch of new data points) arrives.
+    - **Implementation:** This is a much more complex architecture. It would typically involve a streaming pipeline where a message (e.g., from Kafka) triggers a process that updates the model's weights.
+    - **Use Case:** Reserved for very dynamic environments, like high-frequency trading or real-time bidding in online advertising, where the model needs to adapt to changing conditions in minutes or seconds.`,
+  },
+  {
+    id: 459,
+    slug: 'dss-and-polyglot-persistence',
+    question: 'What is "polyglot persistence" and how does Dataiku support it?',
+    answer: `### 1. Introduction/Overview
+Polyglot persistence is the idea of using different data storage technologies for different parts of an application, choosing the best tool for each specific job. For example, using a relational database for transactional data, a document database for a product catalog, and a graph database for social connections.
+
+### 2. How Dataiku Supports It
+- Dataiku is built for this. Its architecture is based on **connectors**, allowing a single Dataiku Flow to read from and write to dozens of different data storage systems.
+- You can have a Flow that:
+    1. Reads customer data from a PostgreSQL database.
+    2. Reads product reviews from MongoDB.
+    3. Joins them together.
+    4. Writes the final result to a Parquet file on S3 for analytics.
+- This allows you to build sophisticated data pipelines that leverage the strengths of multiple specialized data stores, all from a single, unified interface.`,
+  },
+  {
+    id: 460,
+    slug: 'dss-and-serverless-execution',
+    question: 'Can Dataiku recipes be run on serverless compute services (like AWS Lambda or Google Cloud Functions)?',
+    answer: `### 1. Introduction/Overview
+Serverless functions are ideal for short-lived, event-driven tasks. While Dataiku doesn't run recipes on them "natively," it can orchestrate them.
+
+### 2. Integration Pattern
+1.  **Create a Serverless Function:** You would package your Python code into a serverless function (e.g., an AWS Lambda function). This function would contain logic to read from a source, perform a transformation, and write to a destination.
+2.  **Orchestrate from Dataiku:** In your Dataiku Flow, you would have a Python recipe. This recipe's job is not to perform the transformation itself, but to invoke the Lambda function using the AWS SDK.
+3.  **Use Case:** This pattern is useful when you want to integrate a pre-existing serverless function into a larger Dataiku pipeline or when you want to take advantage of the event-driven nature of serverless compute (e.g., having a file upload to S3 automatically trigger a Lambda function that is then monitored by a Dataiku scenario).`,
+  },
+  {
+    id: 461,
+    slug: 'dss-and-infrastructure-drift-detection',
+    question: 'How can you detect "infrastructure drift" in a Dataiku deployment?',
+    answer: `### 1. Introduction/Overview
+Infrastructure drift occurs when the configuration of your production environment "drifts" away from the state defined in your Infrastructure-as-Code (e.g., Terraform) due to manual changes. This is a significant risk.
+
+### 2. Detection Tools
+- **Terraform Plan:** Regularly running \`terraform plan\` against your live infrastructure will show you any differences between the deployed state and the code. If the plan is not empty, you have drift.
+- **Cloud-Native Tools:** Cloud providers have tools to detect this. For example, AWS Config can continuously monitor your resources and alert you if a configuration changes in a way that violates a defined rule.
+- **CSPM Tools:** Cloud Security Posture Management tools are also excellent at detecting drift, as they continuously scan for misconfigurations.
+The goal is to have a process that regularly checks for drift and either automatically remediates it or alerts the operations team to fix it.`,
+  },
+  {
+    id: 462,
+    slug: 'dss-and-git-flow',
+    question: 'What is a good Git branching strategy (like GitFlow) for Dataiku projects?',
+    answer: `### 1. Introduction/Overview
+A standardized branching strategy is crucial for collaborative development. GitFlow is a classic model, but a simpler version is often sufficient for Dataiku projects.
+
+### 2. A Common Simplified Strategy
+- **\`main\` branch:** This branch represents the code that is currently deployed in production. It should be protected, and no one should commit directly to it.
+- **\`develop\` branch:** This is the main integration branch. The Dataiku project on the dev/design node is typically linked to this branch.
+- **Feature branches:** When a developer starts working on a new feature or bug fix, they create a new branch from \`develop\` (e.g., \`feature/add-new-model\` or \`fix/incorrect-join\`). They do all their work on this feature branch.
+- **Pull Requests:** When the feature is complete, they open a pull request to merge their feature branch back into \`develop\`. This is where code reviews happen.
+- **Release:** When it's time to release to production, the \`develop\` branch is merged into the \`main\` branch, which triggers the production deployment pipeline.`,
+  },
+  {
+    id: 463,
+    slug: 'dss-and-canary-releasing-for-batch-pipelines',
+    question: 'How can you apply the concept of a canary release to a batch data pipeline?',
+    answer: `### 1. Introduction/Overview
+While canary releases are common for APIs, the concept can be adapted for batch pipelines. It's about testing a new pipeline version on a small subset of production data before a full rollout.
+
+### 2. Batch Canary Workflow
+1.  **Deploy New Version:** Deploy the new version of your project to the automation node, but don't schedule it to run on all the data yet.
+2.  **Run on a Subset:** Create a new scenario that runs the new pipeline, but only on a small, representative subset of the input data (e.g., for one small region or one partition).
+3.  **Compare Outputs:** The scenario should then compare the output of this canary run with the output from the existing production pipeline for the same data subset.
+4.  **Automated Validation:** The comparison can be done with a Python recipe that checks for differences. If there are no unexpected discrepancies, the canary test passes.
+5.  **Promote:** After a successful canary run, you can then schedule the new pipeline to run on the full dataset.`,
+  },
+  {
+    id: 464,
+    slug: 'dss-and-cloud-cost-anomaly-detection',
+    question: 'How could you build a cloud cost anomaly detection system using Dataiku?',
+    answer: `### 1. Introduction/Overview
+This is a great use case for combining Dataiku's data processing and ML capabilities.
+
+### 2. Workflow
+1.  **Ingest Billing Data:** Create a project that ingests your detailed cloud billing data (e.g., from the AWS Cost and Usage Report). This data is often very large and granular.
+2.  **Prepare and Aggregate:** Use Dataiku recipes to parse and aggregate this data to a useful level (e.g., daily cost per service per project).
+3.  **Train a Forecasting Model:** On this historical aggregated data, use Dataiku's time series forecasting capabilities to build a model that predicts the expected cost for the next day.
+4.  **Detect Anomalies:** Create a daily scenario that compares the actual cost for the previous day with the model's forecasted cost (and its confidence interval).
+5.  **Alerting:** If the actual cost significantly exceeds the forecasted upper bound, the scenario sends an alert to the FinOps team, indicating a potential cost anomaly that needs investigation.`,
+  },
+  {
+    id: 465,
+    slug: 'dss-and-immutable-infrastructure',
+    question: 'What is "immutable infrastructure" and how does it apply to Dataiku?',
+    answer: `### 1. Introduction/Overview
+Immutable infrastructure is a principle where servers are never modified after they are deployed. If you need to update, patch, or modify a server, you don't change it in-place. Instead, you create a new server from a fresh image with the desired changes and replace the old one.
+
+### 2. Application to Dataiku
+- This is a best practice for managing Dataiku nodes.
+- Instead of SSHing into a Dataiku server to apply a security patch or upgrade a dependency, you would:
+    1.  Update your base machine image (e.g., using Packer) with the required changes.
+    2.  Update your Infrastructure-as-Code (Terraform) to use this new image.
+    3.  Roll out new instances based on the new image and terminate the old ones.
+- **Benefits:** This approach leads to more stable, predictable, and reproducible environments. It completely eliminates the problem of "configuration drift," where manual changes make servers inconsistent over time.`,
+  },
+  {
+    id: 466,
+    slug: 'dss-and-dependabot-renovate',
+    question: 'How can tools like Dependabot or Renovate be used to secure Dataiku code environments?',
+    answer: `### 1. Introduction/Overview
+Dependabot (GitHub) and Renovate are automated dependency management tools. They scan your code repositories for dependencies with known security vulnerabilities.
+
+### 2. Use with Dataiku
+- The configuration for your Dataiku code environments (the \`requirements.txt\` file) should be stored in a Git repository.
+- You can configure Dependabot or Renovate to monitor this repository.
+- When a new vulnerability is discovered in one of your Python or R packages, the tool will automatically open a pull request that updates the package to a safe, patched version.
+- This automates a critical part of security management, ensuring that your code environments are not exposed to known vulnerabilities. Your CI/CD pipeline would then test and deploy the updated environment.`,
+  },
+  {
+    id: 467,
+    slug: 'dss-and-data-observability-tools',
+    question: 'How do data observability tools (like Monte Carlo, Bigeye, Anomalo) complement Dataiku?',
+    answer: `### 1. Introduction/Overview
+Data observability tools are specialized platforms that automatically monitor your data at rest in your data warehouse to detect data quality issues like freshness problems, schema changes, and data distribution anomalies.
+
+### 2. How they Complement Dataiku
+- **Automated Monitoring:** These tools can automatically profile all the tables in your data warehouse and learn their normal patterns, requiring less manual configuration than setting up checks in Dataiku for every single dataset.
+- **Alerting as a Trigger:** They can be a powerful trigger for Dataiku workflows. For example, if Monte Carlo detects that a key source table has not been updated on time, it can send a webhook notification.
+- **Triggering a Dataiku Scenario:** This webhook can trigger a Dataiku scenario that either pauses downstream pipelines to prevent them from running on stale data or sends a detailed alert to the data engineering team. This creates a powerful, end-to-end automated data quality system.`,
+  },
+  {
+    id: 468,
+    slug: 'dss-and-cloud-waf-integration',
+    question: 'What are the benefits of integrating Dataiku with a cloud-native WAF (like AWS WAF)?',
+    answer: `### 1. Introduction/Overview
+Integrating with a cloud-native Web Application Firewall (WAF) provides managed, scalable security.
+
+### 2. Key Benefits
+- **Managed Rule Sets:** Cloud providers offer managed rule sets that are automatically updated to protect against the latest threats (e.g., the OWASP Top 10). This reduces the operational burden of managing the WAF.
+- **Deep Integration:** A cloud-native WAF is deeply integrated with other services. For example, you can easily configure AWS WAF to log all its activity to an S3 bucket or a Kinesis stream.
+- **Analyzing WAF Logs in DSS:** You can then use Dataiku to analyze these WAF logs to identify patterns of malicious activity, build dashboards of security events, and create alerts for specific types of attacks. This turns the WAF from a simple blocking tool into a rich source of security intelligence.`,
+  },
+  {
+    id: 469,
+    slug: 'dss-and-cloud-dns-for-ha',
+    question: 'How is cloud DNS (like Route 53 or Azure DNS) used in a high-availability Dataiku setup?',
+    answer: `### 1. Introduction/Overview
+Cloud DNS is a critical component for managing traffic and enabling failover in an HA architecture.
+
+### 2. Role in HA
+- **Health Checks:** You configure the DNS service with a health check that continuously monitors the health of your Dataiku instance (or the load balancer in front of it).
+- **DNS Failover Routing:** You set up a failover routing policy. You have two records for \`dss.mycompany.com\`: a primary record pointing to your main production instance and a secondary record pointing to your disaster recovery (DR) instance.
+- **Automatic Failover:** If the health check for the primary instance fails, the DNS service will automatically stop resolving traffic to the primary IP address and start resolving it to the secondary DR instance's IP address. This provides a fast, automated way to fail over in case of a complete site outage.`,
+  },
+  {
+    id: 470,
+    slug: 'dss-and-software-bill-of-materials-sbom',
+    question: 'What is a Software Bill of Materials (SBOM) and how does it relate to Dataiku governance?',
+    answer: `### 1. Introduction/Overview
+An SBOM is a formal, machine-readable inventory of all the software components, libraries, and dependencies included in an application. It's like a list of ingredients for software.
+
+### 2. Relevance to Dataiku Governance
+- **Vulnerability Management:** An SBOM for your Dataiku deployment would list the Dataiku version, all the Java libraries it uses, and all the packages in all your Python/R code environments. When a new vulnerability like Log4Shell is announced, you can instantly query your SBOM to see if you are affected, without having to manually inspect every environment.
+- **License Compliance:** The SBOM can also include the software license for each component. This allows legal and compliance teams to automatically check for any license conflicts or non-compliant open-source software in your projects.
+- **CI/CD Integration:** You can integrate tools into your CI/CD pipeline that automatically generate and update the SBOM every time you deploy a new version of Dataiku or a code environment.`,
+  },
+  {
+    id: 471,
+    slug: 'dss-and-cloud-native-buildpacks',
+    question: 'How could Cloud Native Buildpacks be used to create container images for Dataiku?',
+    answer: `### 1. Introduction/Overview
+Cloud Native Buildpacks are a modern, automated way to create secure, production-ready container images from source code without having to write a Dockerfile.
+
+### 2. Use with Dataiku Code Environments
+- This is an advanced alternative to manually managing Dockerfiles for your code environments.
+- You could have a CI/CD pipeline that takes the \`requirements.txt\` file for a Dataiku code environment as its input.
+- The buildpack process would automatically:
+    1. Select the correct base image and Python version.
+    2. Install the packages using \`pip\`.
+    3. Apply security patches to the OS layers.
+    4. Optimize the image structure for small size and fast startup.
+- This automates many of the best practices for container image creation, improving security and reducing the operational burden on developers.`,
+  },
+  {
+    id: 472,
+    slug: 'dss-and-git-crypt',
+    question: 'How could you use a tool like git-crypt to manage secrets in a Git-linked project?',
+    answer: `### 1. Introduction/Overview
+\`git-crypt\` is a tool that enables transparent encryption and decryption of files in a Git repository. You can commit encrypted files, and they will only be decrypted if a user has the correct key.
+
+### 2. A Potential (But Complex) Use Case
+- This offers a way to store secrets (like a file with API keys) directly in the project's Git repository in an encrypted form.
+- You would configure \`git-crypt\` to encrypt a specific secrets file.
+- The CI/CD pipeline and authorized users would have the decryption key. When they clone the repository, the secrets file is automatically decrypted. Unauthorized users would only see the encrypted ciphertext.
+- **Caveat:** While this is possible, the standard best practice is to **not** store secrets in Git at all, even encrypted. It's generally safer to use a dedicated secret management system like Vault or AWS Secrets Manager, which provides more robust features like auditing, rotation, and fine-grained access control.`,
+  },
+  {
+    id: 473,
+    slug: 'dss-and-confidential-computing',
+    question: 'What is confidential computing and how might it be used with Dataiku?',
+    answer: `### 1. Introduction/Overview
+Confidential computing is a security model that encrypts data *while it is being processed in memory*. This is achieved through the use of secure enclaves, which are protected areas of a CPU that even the host OS or cloud provider cannot access. Examples include AWS Nitro Enclaves and Intel SGX.
+
+### 2. Use with Dataiku
+- This represents the highest level of data security.
+- You could run a Dataiku instance (or at least the containerized execution pods) on virtual machines that support confidential computing.
+- This would mean that when a Python recipe processes highly sensitive data in a Pandas DataFrame, that data remains encrypted in memory.
+- This protects against advanced attacks where an attacker gains access to the host machine and tries to read the memory of running processes. It's a critical technology for processing highly sensitive data (e.g., in healthcare or finance) in the cloud.`,
+  },
+  {
+    id: 474,
+    slug: 'dss-and-cloud-outposts-or-azure-stack',
+    question: 'How can Dataiku be deployed on a hybrid cloud platform like AWS Outposts or Azure Stack Hub?',
+    answer: `### 1. Introduction/Overview
+AWS Outposts and Azure Stack Hub are hybrid cloud solutions that allow you to run cloud infrastructure and services in your own data center.
+
+### 2. Deployment Model
+- You can deploy a Dataiku instance on the VMs or Kubernetes clusters running on your on-premise Outposts or Azure Stack Hub.
+- **Benefits:**
+    - **Low Latency:** This allows you to run Dataiku physically close to on-premise data sources that cannot be moved to the cloud, providing low-latency access.
+    - **Data Residency:** It helps meet strict data residency requirements where data is not allowed to leave the country or a specific data center.
+- The instance is managed using the same cloud console and APIs (AWS or Azure) as your public cloud resources, providing a consistent operational experience.`,
+  },
+  {
+    id: 475,
+    slug: 'dss-and-kubernetes-operators',
+    question: 'What is a Kubernetes Operator and how could it simplify Dataiku deployment?',
+    answer: `### 1. Introduction/Overview
+A Kubernetes Operator is a method of packaging, deploying, and managing a Kubernetes application. It's essentially a custom controller that uses Kubernetes APIs to manage complex, stateful applications.
+
+### 2. A Dataiku Operator
+- A hypothetical Dataiku Operator would encode the operational knowledge of how to run Dataiku on Kubernetes.
+- Instead of using a Helm chart with many configuration values, you would create a simple YAML file like:
+\`\`\`yaml
+apiVersion: dss.dataiku.com/v1
+kind: DataikuInstance
+metadata:
+  name: my-prod-dss
+spec:
+  version: "12.5.0"
+  replicas: 3
+  license: my-license-secret
+\`\`\`
+- The Operator, running in the cluster, would see this manifest and automatically perform all the complex steps needed to deploy a full, HA Dataiku instance: create the deployments, services, persistent volumes, configure the backend, etc.
+- It could also automate complex day-2 operations like backups and upgrades. This simplifies the management of Dataiku on Kubernetes significantly.`,
   },
 ];
