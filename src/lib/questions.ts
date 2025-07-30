@@ -32,6 +32,9 @@ export const allQuestionSections: QuestionSection[] = [
     title: 'SME Questions',
     questions: smeQuestions.sort((a,b) => a.id - b.id),
   }
-];
+].map(section => ({
+  ...section,
+  questions: section.questions.filter(q => q.question && q.answer) // Filter out incomplete questions
+}));
 
 export const allQuestions: Question[] = allQuestionSections.flatMap(section => section.questions);

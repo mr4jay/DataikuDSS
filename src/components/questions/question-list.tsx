@@ -1,6 +1,7 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
-import { allQuestionSections, type Question, type QuestionSection } from '@/lib/questions';
+import { useState, useMemo } from 'react';
+import { allQuestionSections } from '@/lib/questions';
+import { useCompletionState } from '@/hooks/use-completion-state';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Search } from 'lucide-react';
@@ -9,47 +10,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
 
-function useCompletionState(totalQuestions: number) {
-  const [completedQuestions, setCompletedQuestions] = useState<Set<number>>(new Set());
-
-  useEffect(() => {
-    try {
-      const storedCompletion = localStorage.getItem('dssQuickStartCompletion');
-      if (storedCompletion) {
-        setCompletedQuestions(new Set(JSON.parse(storedCompletion)));
-      }
-    } catch (error) {
-      console.error("Failed to parse completion state from localStorage", error);
-      setCompletedQuestions(new Set());
-    }
-  }, []);
-
-  const toggleCompletion = (questionId: number) => {
-    setCompletedQuestions(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(questionId)) {
-        newSet.delete(questionId);
-      } else {
-        newSet.add(questionId);
-      }
-      localStorage.setItem('dssQuickStartCompletion', JSON.stringify(Array.from(newSet)));
-      return newSet;
-    });
-  };
-  
-  const totalCompleted = completedQuestions.size;
-  const progressValue = totalQuestions > 0 ? (totalCompleted / totalQuestions) * 100 : 0;
-
-  return { completedQuestions, toggleCompletion, totalCompleted, progressValue };
-}
+const converter = new showdown.Converter();
 
 export function QuestionList() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [converter, setConverter] = useState<showdown.Converter | null>(null);
-
-  useEffect(() => {
-    setConverter(new showdown.Converter());
-  }, []);
 
   const totalQuestions = useMemo(() => {
     return allQuestionSections.reduce((acc, section) => acc + section.questions.length, 0);
@@ -72,7 +36,6 @@ export function QuestionList() {
   }, [searchTerm]);
 
   const createMarkup = (markdown: string) => {
-    if (!converter) return { __html: '' };
     return { __html: converter.makeHtml(markdown) };
   };
 
@@ -129,7 +92,7 @@ export function QuestionList() {
                       <div className="flex-1">
                         <Label htmlFor={`complete-${q.id}`} className="cursor-pointer">
                           <CardTitle className={`text-lg ${completedQuestions.has(q.id) ? 'line-through text-muted-foreground' : ''}`}>
-                             {searchTerm ? q.id : index + 1}. {q.question}
+                             {index + 1}. {q.question}
                           </CardTitle>
                         </Label>
                       </div>
@@ -137,7 +100,7 @@ export function QuestionList() {
                   </CardHeader>
                   <CardContent>
                     <div
-                      className="prose prose-sm max-w-none prose-h3:text-base prose-h3:font-semibold"
+                      className="prose prose-sm max-w-none prose-h3:text-base prose-h3:font-semibold prose-pre:bg-card prose-pre:text-card-foreground prose-code:text-foreground"
                       dangerouslySetInnerHTML={createMarkup(q.answer)}
                     />
                   </CardContent>
