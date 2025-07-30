@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { questions as generalQuestions } from '@/lib/questions';
 import { questions as migrationQuestions } from '@/lib/migration-questions';
+import { questions as fresherMistakesQuestions } from '@/lib/fresher-mistakes-questions';
 import type { Metadata } from 'next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -13,7 +14,7 @@ type Props = {
   params: { slug: string };
 };
 
-const allQuestions = [...generalQuestions, ...migrationQuestions].sort((a,b) => a.id - b.id);
+const allQuestions = [...generalQuestions, ...migrationQuestions, ...fresherMistakesQuestions].sort((a,b) => a.id - b.id);
 
 const getQuestionBySlug = (slug: string) => {
   return allQuestions.find(q => q.slug === slug);
