@@ -1285,7 +1285,7 @@ When a code recipe runs as part of an automated scenario, you can't see the outp
     > print("Starting recipe execution...")
     > df = input_dataset.get_dataframe()
     > print(f"Input dataframe has {df.shape[0]} rows.")
-    > # ... your logic ...
+    > # ... your logic here ...
     > print("Recipe execution finished successfully.")
     > \`\`\`
 - **How to view:** Run the recipe. Go to the **Jobs** menu, find the run, and open the log for the recipe step. You will see all your printed messages.
@@ -2040,9 +2040,9 @@ Passing parameters into a scenario run allows you to create highly dynamic and r
     > API_KEY="your_api_key"
     > PAYLOAD_JSON='{"variables":{"standard":{"region":"EMEA"}}}'
     >
-    > curl -X POST -u "${API_KEY}:" \\
+    > curl -X POST -u "\${API_KEY}:" \\
     >      -H "Content-Type: application/json" \\
-    >      -d "${PAYLOAD_JSON}" \\
+    >      -d "\${PAYLOAD_JSON}" \\
     >      "https://dss.mycompany.com/public/api/projects/MYPROJ/scenarios/run_report/run"
     > \`\`\`
 4.  **Execution:** When Dataiku receives this request, it will start the "run_report" scenario. For this specific run, the value of the project variable \`region\` will be temporarily set to "EMEA", and any recipe that uses \`\${region}\` will use this new value.
@@ -3083,9 +3083,9 @@ While you can embed Dataiku charts into external tools, the most robust and perf
 
 ### 6. Common Challenges and Solutions
 - **Challenge:** "My BI dashboard is slow."
-- **Solution:** You are trying to do too much work in the BI tool. **This is the most common anti-pattern.** Do not export raw, un-aggregated data. Perform all the heavy joins and aggregations in Dataiku, leveraging its push-down capabilities. The BI tool should receive a small, clean summary table. Its job is visualization, not ETL.
-- **Challenge:** "The export to the database failed."
-- **Solution:** This is almost always a permissions issue. The database user account that Dataiku is using for the connection must have \`CREATE TABLE\` and \`INSERT\` permissions in the target schema.
+- **Solution:** You are trying to do too much work in the BI tool. **This is the most common anti-pattern.** Do not export raw, un-aggregated data. Perform all the heavy joins and aggregations in Dataiku, leveraging its push-down capabilities. The BI tool should receive a small, clean summary table. Its job is visualization, not complex ETL.
+- **Challenge:** "The export to the database failed with a permissions error."
+- **Solution:** The database user account that Dataiku is using needs \`CREATE TABLE\` and \`INSERT\` permissions in the target schema. Contact your database administrator to have these permissions granted.
 `,
   },
   {
@@ -3590,7 +3590,7 @@ Aligning your Dataiku usage with your organization's compliance standards (wheth
 - **Collaboration:** Regular meetings with your compliance team are essential.
 
 ### 5. Next Steps and Progression
-- **Automated Governance Checks:** Create a "governance" scenario that uses the API to scan projects for compliance violations (e.g., a dataset tagged as \`PII\` in a public project) and sends an alert.
+- **Automated Governance Checks:** Create a "governance" scenario that uses the API to scan projects for compliance violations (e.g., "alert if a dataset tagged as \`PII\` is in a public project") and sends an alert.
 - **Formal Sign-offs:** For regulated industries, use Dataiku's formal sign-off features to create an auditable approval trail for your pipeline's design and deployment.
 
 ### 6. Common Challenges and Solutions
@@ -3849,7 +3849,7 @@ In Dataiku, you don't need to implement a special caching strategy because **eve
 ### 4. Resources and Tools
 - **The Flow:** The visual representation of your cached pipeline.
 - **Build Modes (Smart vs. Forced):** Your control over how the cache is used.
-- **Dataset Format setting:** Your tool for optimizing the cache's performance.
+- **Dataset Format Settings:** Your tool for optimizing the cache's performance.
 
 ### 5. Next Steps and Progression
 - **Clearing the Cache:** To manually clear the cache for a specific dataset, open it, go to the **Actions** menu, and select **Clear data**. The dataset will become empty, and the next job will have to recompute it.
