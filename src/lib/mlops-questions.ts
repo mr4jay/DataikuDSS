@@ -489,7 +489,7 @@ Reproducibility is a cornerstone of good science and MLOps. If you can't reprodu
 
 ### 6. Common Challenges and Solutions
 - **Challenge:** "How do I find the correct version numbers to pin?"
-- **Solution:** When you are first developing the project, you can start with unpinned versions. Once your code works, you can inspect the environment to see which specific versions were installed. A common practice is to use a command like \`pip freeze\` in a terminal with the same packages, which will output a complete list of packages and their exact versions that you can then copy into the Dataiku environment settings.
+- **Solution:** When you are first developing the project, you can start with unpinned versions. Once your code works, you can inspect the environment to see which specific versions were installed. A common practice is to use a command like \`pip freeze\` in a terminal with the same packages, which will output a complete list of packages and their exact versions that you can then copy into the Dataiku code environment settings.
 - **Challenge:** "Pinning everything is tedious."
 - **Solution:** It is a small, one-time effort that saves you from huge, unpredictable headaches in the future. The cost of debugging a mysterious failure caused by an unexpected package update is far higher than the cost of pinning versions upfront.
 `,
@@ -604,7 +604,7 @@ As more teams in your organization adopt Dataiku, ensuring consistency becomes v
     *   Give it a clear name that identifies it as a template, for example: \`TEMPLATE - Standard Analytics Project\`.
 2.  **Build the Standard Structure:** In this empty project, build out the reusable components that all your projects should have.
     *   **Flow Zones:** Create your standard set of Flow Zones (e.g., \`1_Ingestion\`, \`2_Data_Prep\`, \`3_Modeling\`, \`4_Outputs\`). This enforces a consistent pipeline architecture.
-    *   **Wiki:** Create a standard Wiki structure with placeholder pages for key documentation like a "Project Brief", "Data Dictionary", and "Meeting Notes". You can even include a checklist for new developers.
+    *   **Wiki:** Create a standard Wiki structure with placeholder pages for "Project Brief", "Data Dictionary," and "Meeting Notes". You can even include a checklist for new developers.
     *   **Tags:** Add your team's standard set of tags to the project. They will then be available for autocomplete in the new projects.
     *   **Code Libraries:** If you have common helper functions, you can include them in the project's library.
 3.  **Document the Template:** In the template project's Wiki, clearly explain that this is a template and how to use it.
@@ -808,7 +808,7 @@ Manual documentation often becomes outdated. Automating the generation of docume
 - **Challenge:** The generated documentation is not useful because the descriptions are empty.
 - **Solution:** This highlights a process problem. The automation script is a "garbage in, garbage out" system. Your team must have the discipline to write good descriptions on their Dataiku objects for the generated documentation to be valuable.
 - **Challenge:** The script is complex to write.
-- **Solution:** Start simple. Your first version could just list all the datasets in the project and their descriptions. You can add more detail (like schemas, recipe logic, etc.) over time.
+- **Solution:** Start simple. Your first version could just list all the datasets in the project and their descriptions. You can add more detail (like schemas, recipe logic, etc.) over time. Refer to the Dataiku API documentation for examples.
 `,
   },
   {
@@ -1543,7 +1543,7 @@ Managed Spark services like AWS EMR, Azure HDInsight, and Google Cloud Dataproc 
 
 ### 5. Next Steps and Progression
 - **Autoscaling Clusters:** Configure your managed cluster to autoscale. It can automatically add worker nodes when a large job is submitted and remove them when idle, which is highly cost-effective.
-- **Dynamic Clusters:** For advanced use cases, Dataiku can be configured to programmatically create a new cluster just for a specific job run and then destroy it when the job is complete.
+- **Dynamic Clusters:** For advanced use cases, Dataiku can be configured to programmatically create a new cluster for a specific job run and then destroy it when the job is complete.
 
 ### 6. Common Challenges and Solutions
 - **Challenge:** "Dataiku can't submit the job to the cluster."
@@ -2107,7 +2107,7 @@ The Dataiku REST API is the universal key to integrating Dataiku with any extern
 
 ### 6. Common Challenges and Solutions
 - **Challenge:** "401 Unauthorized" error.
-- **Solution:** Your API key is invalid or doesn't have the necessary permissions. Regenerate the key and double-check its permissions in the Dataiku UI. Also, ensure your authentication header is formatted correctly.
+- **Solution:** Your API key is invalid or doesn't have the necessary permissions. Double-check the key and its permissions in the Dataiku UI. Also, ensure your authentication header is formatted correctly.
 - **Challenge:** "Connection Refused" or timeout.
 - **Solution:** This is a network issue. The machine running your orchestrator cannot reach the Dataiku server. Check firewalls and network routing between the two systems.
 `,
@@ -2390,10 +2390,10 @@ Automated data quality checks are a critical part of a robust orchestration pipe
 - **Data Quality Dashboard:** Create a dashboard that visualizes the history of your metrics (e.g., a line chart of the row count over time). This helps you spot trends and anomalies.
 
 ### 6. Common Challenges and Solutions
-- **Challenge:** "My data quality check failed. How do I know why?"
+- **Challenge:** "My pipeline failed. How do I find out which quality check was violated?"
 - **Solution:** Go to the log of the failed scenario run. The log for the "Run Checks" step will give a very clear message, such as: "Check 'price_is_positive' on dataset 'sales_prepared' failed: Found 15 rows where 'price' was < 0."
 - **Challenge:** "I want to be warned of an issue, but I don't want it to stop my entire pipeline."
-- **Solution:** In the "Checks" settings, you can set the **Severity** of a check to **Warning** instead of "Error". A warning will be logged, but it will not cause the "Run Checks" step to fail.
+- **Solution:** In the "Checks" settings, you can set the **Severity** of a check to **Warning** instead of "Error". A warning will be logged but will not cause the "Run Checks" step to fail.
 `,
   },
   {
@@ -2412,7 +2412,7 @@ Setting up user permissions is a fundamental governance task. Dataiku uses a Rol
 ### 3. Step-by-Step Instructions
 
 #### Part 1: Create Groups (Admin Task)
-1.  **Navigate to Administration:** Go to **Administration > Security > Groups**.
+1.  **Navigate to Security Settings:** Go to **Administration > Security > Groups**.
 2.  **Create Groups for Roles:** Create new groups that correspond to the roles in your organization. For example, create a group named \`data-analysts\`, another named \`data-scientists\`, and another named \`report-consumers\`.
 3.  **Add Users to Groups:** Add the individual Dataiku users to their appropriate groups.
 
@@ -2422,7 +2422,7 @@ Setting up user permissions is a fundamental governance task. Dataiku uses a Rol
 3.  **Select a Group and Assign a Role:**
     *   Select a group (e.g., \`report-consumers\`).
     *   Assign a permission level. The three key levels are:
-        *   **Reader:** Can view everything in the project (datasets, flows, dashboards) but cannot edit or run anything. **This is the correct role for business users who only need to view reports.**
+        *   **Reader:** Can view everything in the project (Flows, datasets, dashboards) but cannot edit or run anything. **This is the correct role for business users who only need to view reports.**
         *   **Contributor:** Can do most development work, like creating and editing recipes. **This is for your core developers and analysts.**
         *   **Administrator:** Has full control over the project, including its settings and permissions. **This is for the project owner.**
 4.  **Save:** Save your changes. The permissions are applied instantly.
@@ -2559,13 +2559,14 @@ Audit logging is a critical governance feature that provides a chronological rec
 
 #### Level 1: Project-Specific Audit Trail (The Timeline)
 - **What it tracks:** Changes made to a specific project.
+- **Who it's for:** Project developers and managers.
 - **How to access:**
-    1.  Open the project you want to audit.
-    2.  Go to the **...** menu in the top navigation bar and select **Timeline**.
+    1.  In your project, go to the **...** menu in the top navigation bar and select **Timeline**.
 - **What it shows:** A user-friendly feed of all significant modifications within that project, such as "User A created recipe X," "User B modified dashboard Y," etc. This is perfect for understanding the recent history of a project.
 
 #### Level 2: Instance-Wide Security Audit Trail (Global Audit Log)
 - **What it tracks:** High-level security and administrative events for the entire Dataiku instance.
+- **Who it's for:** Dataiku Administrators, security teams, and compliance auditors.
 - **How to access (Admin only):**
     1.  Go to **Administration > Logs > Global Audit Log**.
 - **What it shows:** This log captures events like user logins, failed login attempts, API key creation, changes to global settings, and permissions modifications.
@@ -2583,12 +2584,12 @@ Audit logging is a critical governance feature that provides a chronological rec
 - **Git Integration:** For the most detailed, developer-focused audit trail.
 
 ### 5. Next Steps and Progression
-- **Log Exporting (Admin):** An administrator can configure Dataiku to forward its logs to an external Security Information and Event Management (SIEM) system like Splunk for centralized analysis and long-term retention.
+- **Log Exporting:** Administrators can configure the Dataiku instance to forward its logs to an external logging system (like Splunk or the ELK stack) for long-term storage, advanced analysis, and alerting.
 - **Alerting on Audit Events:** In an external SIEM, you can set up alerts for specific audit events, such as multiple failed login attempts for a single user.
 
 ### 6. Common Challenges and Solutions
 - **Challenge:** "I need to know who viewed a specific dashboard."
-- **Solution:** This very granular read-access logging is not part of the standard high-level audit trails. Your primary control for this is preventative: use project permissions to ensure only authorized people can access the project containing the dashboard in the first place.
+- **Solution:** This level of detail is not typically captured in the standard high-level audit trails. Your primary control for this is preventative: use project permissions to ensure only authorized people can view the dashboard in the first place.
 - **Challenge:** "The audit log is too noisy."
 - **Solution:** Use the filtering capabilities. Both the Project Timeline and the Global Audit Log have search and filter bars that allow you to narrow down the events by user, object type, or time period.
 `,
@@ -2620,14 +2621,14 @@ Properly managing secrets like passwords, API keys, and database credentials is 
 - **How It Works:**
     1.  In your project, go to **... > Variables**.
     2.  Create a new variable (e.g., \`MY_API_KEY\`).
-    3.  **Crucially, set the variable's type to "Password"**. This encrypts the value, hides it in the UI, and prevents it from being exposed in logs.
+    3.  **Crucially, set the variable's type to "Password"**. This encrypts the value, masks it in the UI, and prevents it from being exposed in logs.
     4.  In your Python recipe, you can then retrieve this secret using \`dataiku.get_custom_variables()\`.
 
 #### Method 3: For Enterprise Security (External Vaults)
 - **When to Use:** For organizations with the highest security requirements and a dedicated secrets management platform.
 - **How It Works (Admin Task):**
     1.  An administrator integrates Dataiku with a tool like **HashiCorp Vault**, **Azure Key Vault**, or **AWS Secrets Manager**. This is configured in **Administration > Settings**.
-    2.  Now, when setting up a connection or a project variable, you will have a new option to fetch the value directly from the configured external vault instead of entering it into Dataiku.
+    2.  Now, when setting up a connection or a project variable, you will have a new option to fetch the value directly from the external vault instead of entering it into Dataiku.
 
 ### 4. Resources and Tools
 - **Dataiku Connections:** The built-in secure store for data source credentials.
@@ -2813,10 +2814,10 @@ For regulatory audits (like those for GDPR, SOX, or HIPAA), you must be able to 
     *   On this page, describe in plain English how the project's design and logic adhere to the relevant regulations. For each clause of the regulation, explain the specific control you've implemented.
 2.  **Maintain a Data Dictionary:**
     *   For your key datasets, especially those containing sensitive or critical data, you must document the meaning of each column.
-    *   Do this in the dataset's **Settings > Schema** tab by adding a **description for each column**. This is your data dictionary.
+    *   Do this in the dataset's **Settings > Schema** tab by adding a **description for each column**. This creates a living data dictionary.
 3.  **Annotate Everything (Metadata):**
     *   Use **Tags** to classify all your datasets (e.g., \`PII\`, \`Source:SAP\`, \`Status:Validated\`).
-    *   Use the **Description** field on every single recipe and dataset to explain its purpose. This creates a self-documenting flow that is easy for an auditor to understand.
+    *   Use the **Description** field on every single recipe and dataset to explain its purpose. This makes the Flow self-documenting and easy for an auditor to understand.
 4.  **Leverage Automatic Lineage:**
     *   When an auditor asks, "Show me exactly how this number on the final report was calculated," your answer is the **Lineage graph**.
     *   Open the final dataset, go to the **Lineage** tab, and select the column in question.
@@ -2833,7 +2834,7 @@ For regulatory audits (like those for GDPR, SOX, or HIPAA), you must be able to 
 
 ### 5. Next Steps and Progression
 - **Automated Documentation:** Write a Python scenario that uses the API to extract all this metadata and automatically generate a formatted PDF report suitable for handing to an auditor.
-- **Formal Sign-offs:** For the most critical projects, use Dataiku's sign-off features to create a formal, auditable record of who reviewed and approved the project for production.
+- **Formal Sign-offs:** For regulated industries, Dataiku has features for formal project sign-offs to create an auditable approval trail.
 
 ### 6. Common Challenges and Solutions
 - **Challenge:** "We have an audit next week, and we have no documentation."
@@ -2915,7 +2916,7 @@ Dataiku is designed from the ground up for team collaboration. It provides a sha
 ### 4. Resources and Tools
 - **Shared Projects with Contributor permissions.**
 - **The Visual Flow.**
-- **Discussions and Descriptions.**
+- **Discussions and Comments.**
 - **Git Integration for parallel development.**
 
 ### 5. Next Steps and Progression
@@ -3305,7 +3306,7 @@ Clear documentation is the bridge that connects the work of data scientists, who
 3.  **For Column-Level Details: Use the Schema View.**
     *   In a dataset's **Settings > Schema**, you can add a **description to each column**. This creates a comprehensive **Data Dictionary** that explains what each feature represents.
 4.  **For Code Logic: Use Comments and Docstrings.**
-    *   In any **Python** or **SQL recipe**, use inline comments and function docstrings to explain *how* the code works and the intent behind any complex logic.
+    *   In any **Python** or **SQL recipe**, use inline comments (\`#\` or \`--\`) and docstrings to explain *how* the code works and the intent behind any complex logic.
 
 ### 4. Resources and Tools
 - **Project Wiki:** For the high-level narrative.
@@ -3409,9 +3410,9 @@ Exposing your work as a RESTful API is how you make your models and data logic a
     *   You can test the endpoint in the designer's "Test" tab by providing a sample JSON input.
 3.  **Deploy the Service:**
     *   Once you are happy with your service definition, click the **Deploy** button.
-    *   The API Deployer will package your model and its dependencies and sends it to the API Deployer.
+    *   The API Deployer will package up your model and deploy it as a live, running service.
 4.  **Use the Live API:**
-    *   Navigate to the API Deployer UI. You will see your service deployed and running.
+    *   Navigate to the API Deployer UI. You will see your newly deployed service.
     *   The UI provides the live **endpoint URL** and **code snippets** showing how other applications can call it.
     *   You can now give this information to your application developers to integrate.
 
@@ -3941,7 +3942,7 @@ Sizing and tuning the nodes in your Dataiku cluster is a critical administrative
 - **Kubernetes Autoscalers (HPA, Cluster Autoscaler).**
 
 ### 5. Next Steps and Progression
-- **Load Testing:** Before deploying a new, critical API, use a load testing tool like JMeter or Locust to simulate high traffic. Monitor the API nodes during the test to see how they perform and to fine-tune your autoscaling rules.
+- **Load Testing:** Before deploying a new, critical API, use a load testing tool like JMeter or Locust to simulate high traffic and see how the system behaves. Use the results to fine-tune your resource allocation and autoscaling rules.
 - **Cost Analysis:** Use your cloud provider's cost management tools to analyze the cost of your Dataiku infrastructure. Use this data to identify opportunities for optimization (e.g., moving stateless workloads to cheaper spot instances).
 
 ### 6. Common Challenges and Solutions
@@ -4296,7 +4297,7 @@ A common source of wasted compute resources and unnecessary cost is redundant wo
 When running Dataiku and its associated compute infrastructure in the cloud, costs can escalate quickly if not monitored. Cloud budget alerts are a simple but powerful FinOps tool. They act as a safety net, automatically notifying you when your spending exceeds a predefined threshold, which helps prevent unexpected bill shocks.
 
 ### 2. Prerequisites
-- **Dataiku running on a cloud provider** (AWS, Azure, GCP).
+- **Dataiku running on a cloud provider** (AWS, Azure, or GCP).
 - **A disciplined tagging strategy:** All your Dataiku-related resources must be consistently tagged.
 - **Access to your cloud provider's billing and cost management console.**
 
@@ -4925,10 +4926,14 @@ DevOps is a set of practices that combines software development and IT operation
 1.  **Write Testable Code:** In your Dataiku project's **Library**, write your core logic as pure Python functions that can be tested in isolation.
 2.  **Use a Testing Framework:** Use a standard Python testing framework like \`pytest\`.
 3.  **Write Unit Tests:** Create test files (e.g., \`test_my_utils.py\`) that import your functions and use \`assert\` statements to check that they produce the expected output for a given input.
-4.  **Integrate into CI/CD:**
-    *   Add a "Unit Test" stage to your CI/CD pipeline script.
-    *   This stage runs the \`pytest\` command.
-    *   If any test fails, \`pytest\` will exit with an error code, which will fail the CI build.
+    > \`\`\`python
+    > from my_utils import my_sum_function
+    >
+    > def test_sum_function():
+    >     assert my_sum_function(2, 3) == 5
+    > \`\`\`
+4.  **Create a "Test" Recipe:** In your Flow, create a Python recipe that uses the \`pytest\` library to discover and run all the tests in your library. If any test fails, the recipe should fail.
+5.  **Add to Test Scenario:** Add this test-running recipe to your main \`run_data_quality_tests\` scenario.
 
 ### 4. Resources and Tools
 - **Linters:** \`flake8\`, \`black\`, \`sqlfluff\`.
