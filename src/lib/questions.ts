@@ -9,6 +9,7 @@ import { automationQuestions } from './automation-questions';
 import { advancedTopicsQuestions } from './advanced-topics-questions';
 import { integrationQuestions } from './integration-questions';
 import { governanceSecurityPerformanceQuestions } from './governance-security-performance-questions';
+import { professionalExperienceQuestions } from './professional-experience-questions';
 
 export interface Question {
   id: number;
@@ -66,7 +67,11 @@ const allSections: QuestionSection[] = [
   {
     title: 'Governance, Security & Performance',
     questions: governanceSecurityPerformanceQuestions,
-  }
+  },
+  {
+    title: 'Professional Experience Profile',
+    questions: professionalExperienceQuestions,
+  },
 ];
 
 export const allQuestionSections: QuestionSection[] = allSections
