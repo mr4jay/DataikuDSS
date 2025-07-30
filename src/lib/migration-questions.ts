@@ -1099,7 +1099,7 @@ Flow Zones are essential for organizing large projects, but they don't change th
 
 ### 6. Common Challenges and Solutions
 - **Challenge:** "My scenario is rebuilding the entire flow every time, which is slow."
-- **Solution:** This is the default behavior if the build mode is set to "Forced rebuild". Change the build mode in your scenario's step to "Build required datasets" or "Since last successful build". This way, Dataiku will intelligently check what has changed and only rebuild the necessary parts of the flow, even across zones.
+- **Solution:** This is the default behavior if the build mode is set to "Forced rebuild". Change the build mode in your scenario's step to "Build required datasets" or "Since last successful build". This will intelligently check what has changed and only rebuild the necessary parts of the flow, even across zones.
 - **Challenge:** "I have a circular dependency between zones."
 - **Solution:** Dataiku flows must be Directed Acyclic Graphs (DAGs). You cannot have a situation where a dataset in Zone 2 depends on Zone 3, and a dataset in Zone 3 depends on Zone 2. The flow of data must be one-way. You need to refactor your logic to break this circular dependency.
 `,
@@ -1142,9 +1142,9 @@ To integrate Dataiku with your broader enterprise architecture, you often need e
 5.  **Schedule the Script:** Use your legacy system's scheduler (like Windows Task Scheduler or cron) to run this script at the desired time.
 
 ### 4. Resources and Tools
-- **Dataiku REST API Documentation:** Available from your instance's Help menu. It's an interactive Swagger UI where you can find all endpoints and even test them.
-- **\`curl\`:** A universal command-line tool for making HTTP requests.
-- **Postman:** A graphical tool that is excellent for testing your API calls before scripting them.
+- **Dataiku REST API Documentation:** It provides details on the "run scenario" endpoint and the expected payload format.
+- **\`.json\` file:** For complex payloads, it's easier to write the JSON in a file and pass it to curl (\`-d @payload.json\`).
+- **Python \`requests\` library:** The ideal tool for making these API calls from a controlling application.
 
 ### 5. Next Steps and Progression
 - **Passing Parameters:** You can send a JSON body in your POST request to override project variables for the run, making your triggered jobs dynamic.
@@ -1354,7 +1354,7 @@ In many data pipelines, you may need to keep a historical archive of intermediat
 
 ### 6. Common Challenges and Solutions
 - **Challenge:** "The export to my file server is failing with a permissions error."
-- **Solution:** The user account that the Dataiku service runs as on the server needs to have write permissions on the target archive folder on the network drive. This often requires working with your IT infrastructure team.
+- **Solution:** The user account that the Dataiku server runs as on the server needs to have write permissions on the target archive folder on the network drive. This often requires working with your IT infrastructure team.
 - **Challenge:** "My archive files are being overwritten."
 - **Solution:** Your archive path is not dynamic enough. You must include variables that change with each run, like \`\${current_day}\` or even \`\${timestamp}\`, to guarantee a unique path for each ingestion cycle.
 `,
@@ -1715,18 +1715,22 @@ Data lineage provides a visual map of how data flows through your system, from s
 ### 3. Step-by-Step Instructions
 
 #### Method 1: High-Level Flow Lineage
-1.  **View the Flow:** The Dataiku Flow itself is a high-level lineage diagram. It shows the relationships between datasets and recipes.
+1.  **View the Flow:** The Dataiku Flow itself is a high-level lineage diagram. It shows the relationships between recipes and datasets.
 2.  **Use Upstream/Downstream Highlighting:**
-    *   In the Flow, right-click on any dataset.
-    *   Select **View upstream dependencies**. Dataiku will highlight the entire chain of recipes and datasets that were used to create it, tracing it back to the original sources.
-    *   Select **View downstream dependencies**. This performs an **impact analysis**, showing you every dataset, model, and dashboard that would be affected if you were to change this dataset.
-3.  **Export for Reports:** You can take a screenshot of the highlighted Flow to include in a documentation or audit report.
+    *   To see how a specific dataset was created, right-click on it in the Flow.
+    *   Select **View upstream dependencies**.
+    *   Dataiku will highlight the entire chain of recipes and datasets that were used to produce it, all the way back to the raw sources.
+3.  **View Downstream Dependencies (Impact Analysis):**
+    *   To see what would be affected by a change, right-click on a dataset.
+    *   Select **View downstream dependencies**.
+    *   Dataiku will highlight every recipe, model, and dashboard that depends on this dataset.
+4.  **Export for Reports:** You can take a screenshot of the highlighted Flow to include in a documentation or audit report.
 
 #### Method 2: Detailed Column-Level Lineage
 1.  **Open a Dataset:** In your Flow, open your final, migrated output dataset.
 2.  **Go to the Lineage Tab:** Click on the **Lineage** tab.
-3.  **Select a Column:** On the right side of the screen, you'll see the schema of your dataset. Click on a specific column.
-4.  **Interpret the Graph:** Dataiku will display a detailed graph showing the "family tree" of that single column. It will show you exactly which source columns from which source datasets, and which specific transformations in which recipes, were involved in creating the final value for that column.
+3.  **Select a Column:** On the right side of the screen, you'll see the schema of your dataset. Click on one of them.
+4.  **Trace the Column's Origin:** The main panel will now display a detailed graph. This graph shows you exactly which columns from which source datasets were used, and which specific transformations were applied, to create the final column you selected.
 5.  **Export for Reports:** You can export this detailed column-level graph as an image to include in your documentation.
 
 ### 4. Resources and Tools
@@ -1735,11 +1739,12 @@ Data lineage provides a visual map of how data flows through your system, from s
 
 ### 5. Next Steps and Progression
 - **Audits and Compliance:** Column-level lineage is extremely powerful for auditors. When they ask "How was this specific value calculated?", you can show them the exact, unambiguous visual proof.
-- **Debugging:** When you find a bug in a final output column, the column-level lineage is the fastest way to trace the problem back to its root cause in an upstream recipe.
+- **Debugging:** When you find a bug in a final output column, the column-level lineage is the fastest way to trace the problem back to the recipe that created it.
+- **Understanding Complex Logic:** Use the lineage graph to deconstruct and understand complex data pipelines built by others.
 
 ### 6. Common Challenges and Solutions
-- **Challenge:** "The lineage graph is broken or incomplete."
-- **Solution:** This will only happen if you use a code recipe (like Python) in a way that bypasses Dataiku's standard data access methods. To ensure complete and accurate lineage, your code must always use the Dataiku API (e.g., \`dataiku.Dataset("input").get_dataframe()\`) to read its inputs. If you read a file from a hardcoded path, Dataiku has no way of knowing about that dependency, and the lineage will be broken.
+- **Challenge:** "My column-level lineage seems incomplete or broken."
+- **Solution:** This almost always happens when a code recipe (Python/R/SQL) accesses data without formally declaring it as an input. To ensure full lineage, your code must use the Dataiku APIs to read and write data, and all sources must be added as formal inputs to the recipe.
 `,
   },
   {
@@ -1806,9 +1811,9 @@ For regulated industries or any business that needs to trust its data, being abl
     *   In plain English, describe the overall goal of the pipeline and the key business rules it implements. For example: "This pipeline calculates customer LTV. It defines an active customer as anyone with a purchase in the last 12 months."
     *   This provides context for a non-technical auditor.
 2.  **The Implementation View (The Flow):**
-    *   **Use Descriptions on Everything:** This is the most important practice. On every single dataset and recipe in your Flow, use the **Description** field in the Summary tab to explain its purpose.
+    *   **Use Descriptions on Everything:** This is the most important habit. On every single dataset and recipe in your Flow, use the **Description** field in the Summary tab to explain its purpose.
         *   Dataset: "Cleaned customer records, one row per unique customer."
-        *   Recipe: "Filters out test accounts and handles null values in address fields."
+        *   Recipe: "Filters out test users and handles null values in address fields."
     *   These descriptions are visible on hover in the Flow, making the pipeline self-documenting.
 3.  **The Detailed Logic View (Inside the Recipe):**
     *   **Visual Recipes:** For a Prepare recipe, you can add a description to each individual transformation step. If you have a complex Formula step, document what it's calculating in its description.
@@ -1828,9 +1833,9 @@ For regulated industries or any business that needs to trust its data, being abl
 
 ### 6. Common Challenges and Solutions
 - **Challenge:** "Writing documentation takes too much time."
-- **Solution:** It's an investment that pays for itself many times over during an audit or when a new person joins the team. The best way to manage the time is to make it part of the development process. Document each recipe right after you build it, while the logic is fresh in your mind.
+- **Solution:** It's an investment that pays for itself many times over during an audit or when a new person joins the team. The best time to write that sentence is right after you build it, while the logic is still fresh in your mind.
 - **Challenge:** "The documentation is out of date."
-- **Solution:** Make documentation updates a part of your change management process. If a developer changes a recipe, they are also responsible for updating its description. This should be checked during code reviews.
+- **Solution:** Make updating the documentation part of the change process. When you modify a recipe's logic, take the extra 10 seconds to update its description to match. This should be checked during code reviews.
 `,
   },
   {
@@ -2519,7 +2524,7 @@ Legacy ETL processes often rely on dropping files (CSVs, etc.) into specific fol
 
 ### 6. Common Challenges and Solutions
 - **Challenge:** "Dataiku can't connect to our internal network drive."
-- **Solution:** The user account that the Dataiku server runs as needs to have read permissions on that specific network folder. You may also need to work with your IT team to ensure the network share is correctly mounted on the Dataiku server machine. This can be complex and often requires infrastructure support.
+- **Solution:** The user account that the Dataiku server runs as on the server needs to have read permissions on that specific network folder. You may also need to work with your IT team to ensure the network share is correctly mounted on the Dataiku server machine. This can be complex and often requires infrastructure support.
 - **Challenge:** "We receive multiple files with slightly different schemas."
 - **Solution:** The "Stack" recipe in Dataiku has advanced options for schema reconciliation. You can create a dataset for each file and then use a Stack recipe to combine them, manually mapping columns that have different names and resolving type mismatches.
 `,
@@ -3022,7 +3027,7 @@ Partitioning is one of the most important performance optimization techniques in
     *   When running a manual job, the build dialog will let you choose a specific date range of partitions to build.
 
 ### 4. Resources and Tools
-- **The Dataset Partitioning Settings:** The UI where you define your partitioning scheme.
+- **The Dataset Partitioning Settings:** The UI for defining your partitioning scheme.
 - **The Scenario Build Step:** Where you specify which partitions to process (e.g., "LATEST").
 
 ### 5. Next Steps and Progression
@@ -3063,15 +3068,15 @@ A key feature of Dataiku's architecture is its built-in, intelligent caching. Yo
 
 ### 4. Resources and Tools
 - **The Dataiku Flow:** The visual representation of your cached data pipeline.
-- **Build Modes (Smart, Forced):** The control you have over using or ignoring the cache.
+- **Build Modes (Smart, Forced):** Your control over using or ignoring the cache.
 
 ### 5. Next Steps and Progression
 - **Optimizing the Cache Format:** You can control the physical format of your cache. For large datasets, change the format in the dataset's **Settings** from CSV to a more performant columnar format like **Parquet** instead of CSV. This makes reading from the cache much faster for downstream recipes.
 - **Explicit Caching (Sync Recipe):** If you have a very complex set of steps that you want to explicitly "cache" before moving to the next stage, you can use a **Sync** recipe. A Sync recipe just copies data from one dataset to another. It's a good way to create a major, stable checkpoint in your flow, often used when moving data between different storage connections.
 
 ### 6. Common Challenges and Solutions
-- **Challenge:** "My job is taking a long time because it's recomputing everything, but I didn't change anything."
-- **Solution:** Check the build mode in your scenario. It's likely set to "Forced rebuild". Change it to "Smart" or "Build required datasets" to enable intelligent caching. Another possibility is that an upstream source dataset was updated, which correctly triggered a rebuild of the entire downstream flow.
+- **Challenge:** "My job is recomputing the whole flow every time."
+- **Solution:** Your scenario's build step is likely set to "Forced rebuild". Change it to "Smart" or "Build required datasets" to enable intelligent caching. Another possibility is that an upstream source dataset was updated, which correctly triggered a rebuild of the entire downstream flow.
 - **Challenge:** "How do I clear the cache for a specific dataset?"
 - **Solution:** Open the dataset, go to its **Actions** menu (in the top right), and click **Clear data**. This will delete the data stored on disk, and the dataset will become "empty". The next time a job needs it, it will have to be recomputed.
 `,
@@ -3237,7 +3242,7 @@ Over time, Dataiku projects can accumulate many intermediate or old datasets tha
 ### 3. Step-by-Step Instructions
 1.  **Identify Obsolete Datasets:**
     *   Look for datasets that are "dangling" at the end of a flow—that is, they are not used as an input by any other recipe, model, or dashboard. Dataiku's UI often highlights these.
-    *   Look for old, temporary "test" or "debug" datasets that were created during development and are no longer needed.
+    *   Look for old test or debug datasets that were created during development and are no longer needed.
     *   Look for old versions of datasets that have been replaced by new pipelines.
 2.  **Use the Impact Analysis Feature:**
     *   Before deleting any dataset, **always** perform an impact analysis to be certain it's not in use.
@@ -3927,7 +3932,7 @@ Data lineage is the map of your data's journey. During and after a migration, it
 
 ### 6. Common Challenges and Solutions
 - **Challenge:** "The lineage graph is broken."
-- **Solution:** This happens when a code recipe reads data from a source that is not declared as a formal input (e.g., reading from a hardcoded file path). To maintain lineage, all data sources must be declared as input datasets to the recipe.
+- **Solution:** This can happen if a code recipe reads data from a source that is not declared as a formal input (e.g., reading from a hardcoded file path). To maintain lineage, all data sources must be declared as input datasets to the recipe.
 - **Challenge:** "We have so many sources, it's hard to document them all."
 - **Solution:** Prioritize. Start by documenting the origins for your most critical, high-risk, or auditable data pipelines. You can then work through the less critical ones over time.
 `,
@@ -3971,7 +3976,7 @@ When migrating data pipelines, especially those handling sensitive information, 
 - **Project Permissions:** For access control.
 - **Prepare Recipe:** For implementing masking and anonymization.
 - **Lineage Graph:** For auditing and proving data provenance.
-- **Project Wiki:** For documenting your compliance strategy.
+- **Project Wiki:** For formally documenting your compliance strategy.
 
 ### 5. Next Steps and Progression
 - **Automated Data Retention:** For regulations that require data to be deleted after a certain period, create an automated **Scenario** with a Python step that deletes old data partitions.
@@ -4007,13 +4012,13 @@ Transformation metadata is information *about* your data transformations. Captur
     *   **What to Capture:**
         *   **Description:** This is the most important field. Write a clear, one-sentence description for every single object. This description appears on hover in the Flow.
         *   **Tags:** Use tags for classification (e.g., \`status:validated\`, \`source:sfdc\`, \`PII\`).
-        *   **Custom Metadata:** Use key-value pairs for structured information (e.g., \`Data Owner: Finance Team\`).
+        *   **Custom Metadata:** Use key-value pairs for structured information (e.g., \`Data Owner: Finance Team\`, \`Data Quality Score\`: \`95%\`).
 3.  **Column-Level Metadata (The "Data Dictionary"):**
     *   **Where:** In a dataset's **Settings > Schema** tab.
     *   **What to Capture:** You can add a **description for each individual column**. This is where you explain what a specific field means (e.g., "cust_ltv: Customer Lifetime Value, calculated as..."). This creates a living data dictionary.
 4.  **Step-Level Metadata (The "How"):**
     *   **Where:** Inside a **Prepare recipe**.
-    *   **What to Capture:** You can add a description to each individual processor step in the script. This is useful for explaining a complex **Formula** or a tricky **Filter** condition.
+    *   **What to Capture:** You can add a description to each individual processor step. This is useful for explaining a complex **Formula** or a tricky **Filter** condition.
 
 ### 4. Resources and Tools
 - **The Project Wiki:** For long-form, narrative documentation.
@@ -4132,7 +4137,7 @@ An audit trail is a chronological record of changes that allows you to answer th
 - **Challenge:** "I need to know who viewed a dashboard."
 - **Solution:** This level of read-access auditing is not typically captured in the main audit trails. It may be available in more detailed access logs on the Dataiku server, but this would require investigation by an administrator. The primary control here is preventative: use project permissions to ensure only authorized people can view the dashboard in the first place.
 - **Challenge:** "The Project Timeline is too noisy."
-- **Solution:** Use the filter controls at the top of the Timeline page. You can filter by the name of the user who made the change or by the type of object that was modified to quickly find the event you are looking for.
+- **Solution:** Use the filter controls at the top of the Timeline page. You can filter by user or by the type of object that was changed to find the specific event you are looking for.
 `,
   },
   {
@@ -4253,31 +4258,32 @@ Version control is the practice of tracking and managing changes to software cod
     *   Click the button to **Convert to Git project**.
     *   In the dialog, enter the **URL of your remote Git repository**.
 2.  **Make Your First Commit:**
-    *   A new **Git** icon now appears in your project's main navigation bar. Click it.
-    *   This page shows all the objects in your project as "Unstaged changes".
-    *   Click the checkbox at the top to **Stage All** changes.
-    *   In the text box at the bottom, type a commit message, like "Initial project commit".
+    *   A new **Git** icon now appears in your project's top navigation bar. Click it.
+    *   This page shows all the changes you've made to the project. Initially, this will be every object in the project.
+    *   Click the checkbox to **Stage all** changes.
+    *   Write a commit message in the box at the bottom (e.g., "Initial project commit").
     *   Click the **Commit** button.
-3.  **Push to the Remote:**
-    *   Your commit currently only exists on the Dataiku server's local Git repository. To share it and have it backed up, you must push it to the remote server.
-    *   Click the **Push** button.
-4.  **Adopt a Standard Workflow:** From now on, your development workflow should be:
-    1.  Make changes in your Dataiku project.
-    2.  Go to the Git page, review your changes, **Stage** them, write a clear **Commit** message, and then **Push** to the remote.
+3.  **Push to the Remote Repository:**
+    *   Your commit now exists locally on the Dataiku server. To share it, you need to push it.
+    *   Click the **Push** button to send your commits to the remote repository.
+4.  **The Standard Workflow:** From now on, the workflow is:
+    *   Make changes to your project (edit a recipe, create a dataset, etc.).
+    *   Go to the **Git** page, **stage** your changes, **commit** them with a clear message, and **push** them to the remote.
 
 ### 4. Resources and Tools
 - **Dataiku's Git Integration Page:** The UI for all your daily Git operations (committing, pushing, pulling, branching).
 - **A Git Provider:** GitHub, GitLab, Azure DevOps, Bitbucket, etc.
 
 ### 5. Next Steps and Progression
-- **Branching:** Don't commit directly to the \`main\` branch. Use the "Create branch" feature to work on a new feature or bug fix in an isolated branch.
-- **Pull Requests (PRs):** When your branch is ready, push it and then go to your Git provider's website to create a Pull Request. This is how you initiate a **code review**, where a teammate can review your changes before they are merged into the main branch. This is a critical best practice.
+- **Branching:** Don't work directly on the \`main\` branch. Use the Git page to **Create branch**. Make your changes on a feature branch (e.g., \`feature/add-new-sales-report\`).
+- **Pull Requests:** When your feature is complete, push your branch and then use your Git provider's interface (e.g., GitHub) to create a **Pull Request**. This allows for code review before merging the changes back into the \`main\` branch.
+- **Resolving Conflicts:** If you and a colleague edit the same object, you may have a merge conflict when you try to **Pull** their changes. Dataiku provides a visual diff tool to help you resolve these conflicts.
 
 ### 6. Common Challenges and Solutions
-- **Challenge:** "I'm getting an authentication error when I try to push."
-- **Solution:** The Dataiku server needs to be authenticated with your Git provider. This is typically done by a Dataiku administrator who configures an SSH key on the server and adds it as a deploy key in the Git repository settings.
+- **Challenge:** "Push/Pull failed with an authentication error."
+- **Solution:** This means the Dataiku server cannot authenticate with your Git provider. Your Dataiku administrator needs to set up SSH keys or other credentials to allow the server to connect to the Git repository.
 - **Challenge:** "What is actually being saved in Git?"
-- **Solution:** Git saves the *definition* of your project: the JSON files that define your recipes, the schema of your datasets, your Python/SQL code, etc. It does **not** save the actual data from your datasets. This is good, as you don't want to store multi-gigabyte data files in a Git repository.
+- **Solution:** Dataiku versions the *definition* of your project—the structure of your Flow, the code in your recipes, the settings of your datasets, etc. It does **not** version the actual data within your datasets. This is good, as you don't want to store multi-gigabyte data files in a Git repository.
 `,
   },
   {
@@ -4405,12 +4411,12 @@ Benchmarking runtime and cost is one of the most effective ways to prove the val
     *   This could be a portion of the Alteryx Server's annual license cost, plus the cost of the server hardware it runs on.
     *   For example: (Alteryx Server Annual Cost / Total Annual Job Runs) = Cost Per Job.
 2.  **Calculate New Cost:**
-    *   If running on the cloud, this is easier to measure.
+    *   If running in the cloud, this is easier to measure.
     *   For example, if the Dataiku job ran on a Snowflake warehouse, you can use Snowflake's query history to find the exact number of credits (which translates to cost) consumed by the query.
 3.  **Compare and Report:** Compare the estimated cost per run of the old system vs. a new system. Often, moving to a consumption-based cloud data warehouse results in significant cost savings compared to a fixed-license legacy tool.
 
 ### 4. Resources and Tools
-- **Job logs** from both the legacy system and Dataiku.
+- **Job logs** from both systems to get runtimes.
 - **Cloud provider cost management dashboards** (for cost benchmarking).
 - **A presentation slide** to clearly communicate the "Before vs. After" results to leadership.
 
