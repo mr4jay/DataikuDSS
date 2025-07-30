@@ -1260,9 +1260,9 @@ Dependabot (GitHub) and Renovate are automated dependency management tools. They
 Data observability tools are specialized platforms that automatically monitor your data at rest in your data warehouse to detect data quality issues like freshness problems, schema changes, and data distribution anomalies.
 
 ### 2. How they Complement Dataiku
-- **Automated Monitoring:** These tools can automatically profile all the tables in your data warehouse and learn their normal patterns, requiring less manual configuration than setting up checks in Dataiku for every single dataset.
-- **Alerting as a Trigger:** They can be a powerful trigger for Dataiku workflows. For example, if Monte Carlo detects that a key source table has not been updated on time, it can send a webhook notification.
-- **Triggering a Dataiku Scenario:** This webhook can trigger a Dataiku scenario that either pauses downstream pipelines to prevent them from running on stale data or sends a detailed alert to the data engineering team. This creates a powerful, end-to-end automated data quality system.`,
+- **Automated, Broad Monitoring:** These tools can automatically profile all the tables in your data warehouse and learn their normal patterns, requiring less manual configuration than setting up checks in Dataiku for every single dataset.
+- **Upstream Data Quality:** They are excellent at detecting data quality issues in the source systems *before* the data even enters a Dataiku pipeline.
+- **Triggering Dataiku Scenarios:** An alert from an observability tool (e.g., "Source table is stale") can be sent via webhook to trigger a Dataiku scenario that pauses the downstream pipeline, preventing it from running on bad data. This creates a powerful, proactive data quality ecosystem.`,
   },
   {
     id: 468,
@@ -1379,5 +1379,340 @@ spec:
 \`\`\`
 - The Operator, running in the cluster, would see this manifest and automatically perform all the complex steps needed to deploy a full, HA Dataiku instance: create the deployments, services, persistent volumes, configure the backend, etc.
 - It could also automate complex day-2 operations like backups and upgrades. This simplifies the management of Dataiku on Kubernetes significantly.`,
+  },
+  {
+    id: 476,
+    slug: 'dss-and-continuous-deployment-for-batch-pipelines',
+    question: 'What is continuous deployment for batch pipelines, and how does it differ from continuous delivery?',
+    answer: `### 1. Introduction/Overview
+Both are CI/CD concepts, but they differ in their level of automation.
+
+### 2. Comparison
+- **Continuous Delivery:** The pipeline automatically runs tests on every commit. If tests pass, it creates a release artifact (like a Dataiku project bundle) and deploys it to a staging/QA environment. However, the final deployment to production requires a **manual approval** step.
+- **Continuous Deployment:** This is a step further. If all automated tests pass in the staging environment, the pipeline **automatically deploys** the changes to production without any human intervention.
+
+For most Dataiku batch pipelines, Continuous Delivery is the more common and prudent approach, as it allows for a final human review before impacting production data. Continuous Deployment is more common for low-risk changes or highly mature teams with extremely robust automated testing.`,
+  },
+  {
+    id: 477,
+    slug: 'dss-and-data-observability-platforms',
+    question: 'How do data observability platforms like Monte Carlo or Bigeye complement Dataiku?',
+    answer: `### 1. Introduction/Overview
+Data observability tools provide automated, end-to-end monitoring of data pipelines, often by learning normal data patterns and then alerting on anomalies. They complement Dataiku's internal checks.
+
+### 2. How they Complement Dataiku
+- **Automated, Broad Monitoring:** These tools can automatically monitor all tables in your data warehouse for issues like freshness, volume, and schema drift, without requiring you to manually configure checks for each one in Dataiku.
+- **Upstream Data Quality:** They are excellent at detecting data quality issues in the source systems *before* the data even enters a Dataiku pipeline.
+- **Triggering Dataiku Scenarios:** An alert from an observability tool (e.g., "Source table is stale") can be sent via webhook to trigger a Dataiku scenario that pauses the downstream pipeline, preventing it from running on bad data. This creates a powerful, proactive data quality ecosystem.`,
+  },
+  {
+    id: 478,
+    slug: 'dss-and-schema-registries',
+    question: 'What is a schema registry (like Confluent Schema Registry) and how would it be used with Dataiku streaming pipelines?',
+    answer: `### 1. Introduction/Overview
+A schema registry is a central service for storing and validating schemas (e.g., Avro schemas) for event-driven systems like Kafka. It ensures that data producers and consumers agree on the data format.
+
+### 2. Use with Dataiku
+- When building a Kafka streaming pipeline in Dataiku, integrating with a schema registry is a best practice.
+- **Producer (Writing to Kafka):** When a Dataiku recipe writes to a Kafka topic, it first registers the data's schema with the registry. It then serializes the data according to that schema.
+- **Consumer (Reading from Kafka):** When a Dataiku streaming dataset reads from Kafka, it fetches the schema from the registry to correctly deserialize the incoming data.
+- **Governance:** The schema registry can be configured with compatibility rules (e.g., to prevent a producer from making a breaking change to the schema), which prevents downstream Dataiku jobs from failing due to unexpected format changes.`,
+  },
+  {
+    id: 479,
+    slug: 'dss-and-policy-as-code-opa',
+    question: 'How can you use Policy-as-Code (e.g., Open Policy Agent) to govern a Dataiku deployment?',
+    answer: `### 1. Introduction/Overview
+Policy-as-Code (PaC) allows you to define and enforce organizational policies in a declarative, automated way. Open Policy Agent (OPA) is a popular open-source tool for this.
+
+### 2. Use Cases with Dataiku
+- **Terraform/Infrastructure:** You can integrate OPA into your CI/CD pipeline for Terraform. Before applying any infrastructure changes for your Dataiku instance, the pipeline can query OPA to ensure the changes comply with policy (e.g., "No S3 buckets can be created without encryption enabled," "Database instances cannot be larger than size X").
+- **Kubernetes:** You can use OPA as a Kubernetes admission controller to enforce policies on Dataiku jobs (e.g., "All pods must have resource limits set," "Containers cannot run as the root user").
+This automates governance and prevents non-compliant resources from ever being created.`,
+  },
+  {
+    id: 480,
+    slug: 'dss-and-cloud-cost-showback-chargeback',
+    question: 'How would you implement a "showback" or "chargeback" system for Dataiku usage?',
+    answer: `### 1. Introduction/Overview
+Showback (reporting costs to teams) and chargeback (actually billing teams for costs) are key FinOps practices for making teams accountable for their cloud spend.
+
+### 2. Implementation Strategy
+1.  **Tagging is Everything:** Enforce a strict policy where all cloud resources are tagged with the project key and the user who created them.
+2.  **Ingest Billing Data:** Use a Dataiku project to ingest the detailed cloud billing reports (e.g., AWS CUR).
+3.  **Join and Aggregate:** Join the billing data with information from the Dataiku API about which user belongs to which team or business unit.
+4.  **Create a Dashboard:** Build a Dataiku dashboard (or a BI dashboard) that shows cloud costs aggregated by team, project, and user.
+5.  **For Containerized Execution:** Use a tool like Kubecost, which is specifically designed to allocate the costs of a shared Kubernetes cluster back to the individual namespaces or projects that consumed the resources.`,
+  },
+  {
+    id: 481,
+    slug: 'dss-and-immutable-code-environments',
+    question: 'What is an "immutable" code environment, and why is it a best practice?',
+    answer: `### 1. Introduction/Overview
+An immutable code environment is one that is never changed in-place. If you need to add or update a package, you build a completely new environment and replace the old one.
+
+### 2. How it Works with Containers
+- This principle is naturally supported by containerized execution.
+- Your code environments are defined as Docker images with specific version tags (e.g., \`my-python-env:1.2.0\`).
+- If you need to update a library, you build a new Docker image and tag it as version \`1.2.1\`.
+- You then update your Dataiku code environment setting to point to this new image tag.
+- **Benefits:** This prevents "dependency hell" and ensures that jobs are always run in a predictable, version-controlled, and tested environment. It eliminates the risk of an administrator changing a shared environment in-place and breaking existing projects.`,
+  },
+  {
+    id: 482,
+    slug: 'dss-and-cloud-iam-access-analyzer',
+    question: 'How can a tool like AWS IAM Access Analyzer help secure a Dataiku deployment?',
+    answer: `### 1. Introduction/Overview
+IAM Access Analyzer is an AWS service that uses formal methods to analyze your IAM policies and identify resources (like S3 buckets or IAM roles) that can be accessed from outside your AWS account.
+
+### 2. How it Helps
+- It provides a powerful, automated way to audit your security posture.
+- You can configure the analyzer to continuously monitor your environment. If a developer accidentally applies a policy that makes an S3 bucket used by Dataiku public, Access Analyzer will generate a finding to alert you of this critical security risk.
+- This helps you adhere to the principle of least privilege and prevent accidental data exposure.`,
+  },
+  {
+    id: 483,
+    slug: 'dss-and-model-serving-patterns',
+    question: 'Beyond a simple REST API, what are some other patterns for model serving?',
+    answer: `### 1. Introduction/Overview
+Different use cases require different serving patterns.
+
+### 2. Serving Patterns
+- **Batch Serving (Most Common):** The model is applied to a large batch of data on a schedule. This is done in Dataiku using a **Score recipe** in a scenario. It's efficient for non-real-time use cases like generating a daily list of customers likely to churn.
+- **Real-time Serving (Request/Response):** A client application sends a single request to a model API and gets a prediction back immediately. This is what the **API Deployer** is for.
+- **Streaming Serving:** The model is applied to a continuous stream of events (e.g., from Kafka). This is used for real-time applications that need to process high-volume, event-driven data, and is implemented with Dataiku's streaming pipelines.`,
+  },
+  {
+    id: 484,
+    slug: 'dss-and-git-lfs-locking',
+    question: 'What is Git LFS file locking, and how could it be useful for a Dataiku project?',
+    answer: `### 1. Introduction/Overview
+Git LFS file locking is a feature that allows a user to "lock" a file, preventing anyone else from pushing changes to that file until it is unlocked. This is designed to prevent merge conflicts for large binary files that cannot be merged automatically.
+
+### 2. Use Case with Dataiku
+- This could be useful for managing shared, non-mergeable resources within a Dataiku project, such as the visual analysis script of a model in the Lab.
+- A data scientist could lock the analysis before making significant changes, signaling to their team that they are actively working on it.
+- This prevents a situation where two people make conflicting changes to the same visual model design and one person's work gets overwritten when they pull changes from Git.`,
+  },
+  {
+    id: 485,
+    slug: 'dss-and-vpc-endpoints',
+    question: 'Why should I use VPC Endpoints (e.g., for S3) when connecting from Dataiku?',
+    answer: `### 1. Introduction/Overview
+A VPC Endpoint allows you to connect to supported AWS services (like S3 or Secrets Manager) from within your VPC without the traffic ever leaving the Amazon network.
+
+### 2. Benefits
+- **Security:** When you use a VPC endpoint for S3, traffic from your Dataiku EC2 instance to S3 goes over AWS's private network backbone, not over the public internet. This significantly improves security.
+- **Performance:** A private connection can sometimes offer more reliable and lower-latency performance than going over the internet.
+- **Cost:** In some cases, it can reduce data transfer costs.
+
+It's a best practice to use VPC endpoints for all supported services that Dataiku needs to connect to, ensuring a more secure and efficient architecture.`,
+  },
+  {
+    id: 486,
+    slug: 'dss-and-time-to-live-ttl-on-data',
+    question: 'How can I implement a Time-to-Live (TTL) policy on Dataiku datasets?',
+    answer: `### 1. Introduction/Overview
+A TTL policy automatically deletes data after a certain period. This is useful for managing storage costs and complying with data retention policies.
+
+### 2. Implementation Strategy
+- **For Partitioned Datasets:** This is the easiest case. Create a Dataiku scenario that runs a Python recipe on a schedule. The recipe uses the Dataiku API to list all partitions of the target dataset, checks their date, and deletes any partitions that are older than the specified TTL.
+- **For Non-Partitioned Datasets:** This is more complex. You would need a column in your dataset that contains a timestamp. A scenario would run a SQL or Python recipe that explicitly deletes rows from the dataset where the timestamp is older than the TTL. This is less efficient than dropping a whole partition.
+This highlights the importance of using partitioning for time-series data from the start.`,
+  },
+  {
+    id: 487,
+    slug: 'dss-and-cloud-resource-tagging-strategies',
+    question: 'What is a good resource tagging strategy for a Dataiku deployment on the cloud?',
+    answer: `### 1. Introduction/Overview
+A consistent tagging strategy is essential for cost management, security, and automation.
+
+### 2. Recommended Tags
+Every cloud resource associated with Dataiku should have at least the following tags:
+- \`owner\`: The user or team responsible for the resource.
+- \`environment\`: The environment it belongs to (\`dev\`, \`qa\`, \`prod\`).
+- \`project_key\`: The Dataiku project key it's associated with (if applicable).
+- \`creation_date\`: The date the resource was created.
+- \`cost_center\`: The business unit or cost center to bill for the resource.
+
+### 3. Enforcement
+You can use Policy-as-Code tools (like OPA) or native cloud features (like AWS Service Control Policies) to enforce this tagging strategy, for example by preventing the creation of any resource that is missing the required tags.`,
+  },
+  {
+    id: 488,
+    slug: 'dss-and-server-side-encryption-sse',
+    question: 'What is Server-Side Encryption (SSE) and how does it apply to data stored by Dataiku?',
+    answer: `### 1. Introduction/Overview
+Server-Side Encryption is a feature of cloud object stores (like S3) where the service automatically encrypts your data after it is uploaded and decrypts it when it is downloaded.
+
+### 2. How it Applies to Dataiku
+- This is a critical security feature that should always be enabled.
+- When Dataiku writes a dataset to an S3 bucket, it sends the unencrypted data over a secure TLS connection.
+- S3 receives the data and encrypts it on its side before writing it to disk, using an encryption key managed by AWS (this is known as SSE-S3).
+- When Dataiku reads the data back, S3 automatically decrypts it and sends it over the secure connection.
+- This provides strong encryption-at-rest with zero performance overhead and no complex configuration required within Dataiku. You simply enable the default encryption policy on the S3 bucket.`,
+  },
+  {
+    id: 489,
+    slug: 'dss-and-cross-region-replication',
+    question: 'How would you set up cross-region replication for a Dataiku disaster recovery plan?',
+    answer: `### 1. Introduction/Overview
+Cross-region replication is key to a robust DR plan, ensuring your data and infrastructure can be recovered even if an entire cloud region fails.
+
+### 2. Replication Strategy
+- **Dataiku Data Directory:** The storage volume for the Data Directory (e.g., an AWS EBS volume) should be snapshotted regularly. These snapshots should then be automatically copied to your secondary DR region.
+- **External Database:** If you are using a managed database (like AWS RDS), you can configure it to have a "read replica" in the DR region. This replica is kept continuously in sync with the primary database.
+- **Data Sources:** Your cloud data lake storage (e.g., S3 buckets) should be configured with Cross-Region Replication (CRR) enabled, so that all data is automatically and asynchronously copied to a bucket in the DR region.
+With this setup, you have all the necessary components in your DR region to bring the Dataiku instance back online in a disaster scenario.`,
+  },
+  {
+    id: 490,
+    slug: 'dss-and-fargate-ecs',
+    question: 'Can I use serverless container platforms like AWS Fargate or Azure Container Instances for Dataiku jobs?',
+    answer: `### 1. Introduction/Overview
+AWS Fargate (with ECS) and Azure Container Instances (ACI) are "serverless" container platforms where you can run containers without managing the underlying virtual machines. Dataiku can be configured to use these for containerized execution.
+
+### 2. Benefits
+- **Simplified Operations:** You don't have to manage a Kubernetes cluster or a fleet of EC2 instances. You just provide a Docker container and the platform runs it.
+- **Fast Startup:** These platforms can often start containers very quickly.
+- **Use Case:** This is an excellent choice for running Dataiku recipes that are infrequent or have spiky workloads. You pay only for the resources consumed while the container is running, without paying for idle VMs. This can be very cost-effective for the right type of workload.`,
+  },
+  {
+    id: 491,
+    slug: 'dss-and-code-signing',
+    question: 'What is code signing and how could it be applied in a highly regulated Dataiku environment?',
+    answer: `### 1. Introduction/Overview
+Code signing is the process of digitally signing executables and scripts to verify the author's identity and ensure that the code has not been altered since it was signed.
+
+### 2. Application to Dataiku
+- In a very high-security environment, you could implement a CI/CD pipeline where all Python/R code that is checked into the project's Git repository must be signed with a trusted certificate.
+- The Dataiku instance itself could be configured (via a custom plugin or hook) to refuse to execute any code that does not have a valid digital signature.
+- This provides a very strong guarantee of code integrity and prevents unauthorized or tampered code from being run in your production environment.`,
+  },
+  {
+    id: 492,
+    slug: 'dss-and-shacl-for-ontologies',
+    question: 'How could Dataiku be used with SHACL for validating RDF data?',
+    answer: `### 1. Introduction/Overview
+This is a very specific use case for organizations using semantic web technologies. RDF is a data model for knowledge graphs, and SHACL (Shapes Constraint Language) is a language for validating RDF graphs against a set of conditions or "shapes".
+
+### 2. Integration Workflow
+1.  **Store Graph Data:** You would have your RDF data stored in a graph database (a "triplestore") like Stardog or GraphDB.
+2.  **Run Validation in Python:** In a Dataiku Python recipe, you can use an RDF library (like \`rdflib\`) and a SHACL validation library (like \`pyshacl\`).
+3.  **The recipe would:**
+    - Read data from the triplestore.
+    - Load the SHACL shapes file (which defines the constraints).
+    - Run the validation process.
+4.  **Output Results:** The recipe would output a validation report dataset, listing any data that does not conform to the defined shapes. This allows you to integrate knowledge graph validation into a standard Dataiku data quality workflow.`,
+  },
+  {
+    id: 493,
+    slug: 'dss-and-cloud-firewall-services',
+    question: 'How do you use a centralized cloud firewall service (like AWS Network Firewall or Azure Firewall) to protect Dataiku?',
+    answer: `### 1. Introduction/Overview
+A centralized, managed firewall service provides more advanced protection than simple network security groups.
+
+### 2. Architecture
+- You route all network traffic entering and leaving your Dataiku VPC through the managed firewall service.
+- **Benefits:**
+    - **Advanced Inspection:** These services can perform deep packet inspection and intrusion prevention, blocking more sophisticated threats than a simple port-based firewall.
+    - **Centralized Management:** You can manage firewall rules for your entire cloud environment from a single place.
+    - **Managed Threat Intelligence:** The firewall's rule sets can be automatically updated by the cloud provider with the latest threat intelligence.
+This provides a much more robust and manageable network security posture for your Dataiku deployment.`,
+  },
+  {
+    id: 494,
+    slug: 'dss-and-git-hooks',
+    question: 'Can I use Git hooks (e.g., pre-commit) with a Dataiku project?',
+    answer: `### 1. Introduction/Overview
+Git hooks are scripts that run automatically at certain points in the Git lifecycle. While you can't install them directly on the Dataiku server's Git repository, you can use them in your local clone of the project.
+
+### 2. Local Workflow
+- A developer can set up a **pre-commit hook** in their local clone of the Dataiku project's repository.
+- This hook could be a script that runs a linter (like \`flake8\`) on any Python recipe code they've changed.
+- If the linter finds any issues, the hook will fail, preventing the developer from committing code that doesn't meet the team's style standards.
+- This helps enforce code quality before the code is ever pushed to the central repository. A CI/CD pipeline would then run the same checks on the server side as a second line of defense.`,
+  },
+  {
+    id: 495,
+    slug: 'dss-and-multi-factor-authentication-mfa',
+    question: 'How is Multi-Factor Authentication (MFA) enabled for Dataiku?',
+    answer: `### 1. Introduction/Overview
+MFA adds a critical layer of security to user logins. Dataiku supports MFA, but it is typically enforced by an external Single Sign-On (SSO) provider.
+
+### 2. How it Works
+1.  You integrate Dataiku with an SSO provider like Okta, Azure AD, or Google Workspace.
+2.  You enforce the MFA policy within the SSO provider's settings. For example, in Azure AD, you can create a Conditional Access policy that requires users to provide a second factor when logging into the Dataiku application.
+3.  When a user logs into Dataiku, they are redirected to the SSO provider. The SSO provider handles the entire MFA flow (e.g., prompting the user for a code from their authenticator app).
+4.  Once the user has successfully authenticated with MFA, they are redirected back to Dataiku and logged in.
+This delegates the responsibility for strong authentication to the dedicated identity provider.`,
+  },
+  {
+    id: 496,
+    slug: 'dss-and-cloud-audit-logs',
+    question: 'How can I use cloud audit logs (like CloudTrail or Azure Monitor) to monitor Dataiku?',
+    answer: `### 1. Introduction/Overview
+Cloud audit logs record all API calls made within your cloud account. They provide a powerful way to monitor the actions performed by the Dataiku instance on cloud resources.
+
+### 2. What to Monitor
+- You can create alerts or dashboards based on the audit logs to monitor key events:
+    - **S3/Blob Storage Access:** Monitor which IAM roles or users associated with Dataiku are accessing sensitive data buckets.
+    - **Resource Creation:** Get an alert if the Dataiku service account creates a new resource (like a VM or database) that is not compliant with your policies.
+    - **Security Group Changes:** Get an immediate alert if anyone changes a security group associated with the Dataiku instances.
+This provides a crucial layer of security monitoring at the infrastructure level, complementing the application-level logging within Dataiku itself.`,
+  },
+  {
+    id: 497,
+    slug: 'dss-and-short-lived-credentials',
+    question: 'How can Dataiku use short-lived credentials for cloud access?',
+    answer: `### 1. Introduction/Overview
+Using short-lived credentials is a security best practice that minimizes the risk of a leaked credential being misused. Dataiku naturally supports this when configured correctly.
+
+### 2. How it Works
+- **IAM Roles / Managed Identities:** The best way to achieve this is to use IAM Roles (AWS), Managed Identities (Azure), or GCP Service Accounts attached to the Dataiku VMs.
+- When configured this way, the cloud provider's metadata service automatically provides the Dataiku instance with temporary, short-lived credentials.
+- The Dataiku instance (and the AWS/Azure/GCP SDKs it uses) automatically rotates these credentials before they expire.
+- This completely avoids the need to store long-lived static access keys in Dataiku's configuration, which is a significant security improvement.`,
+  },
+  {
+    id: 498,
+    slug: 'dss-and-private-link',
+    question: 'What is AWS PrivateLink or Azure Private Link, and why would I use it with Dataiku?',
+    answer: `### 1. Introduction/Overview
+Private Link is a cloud networking feature that allows you to connect to a service (like a database or a SaaS application) as if it were running privately within your own VPC, without the traffic ever crossing the public internet.
+
+### 2. Use Case with Dataiku
+- Imagine your Snowflake database is hosted in Snowflake's VPC, and your Dataiku instance is in your VPC.
+- Instead of connecting over the internet, you can use PrivateLink to create a private endpoint for Snowflake directly inside your Dataiku VPC.
+- When Dataiku connects to this endpoint, the traffic flows over the cloud provider's private network backbone.
+- **Benefits:**
+    - **Enhanced Security:** No exposure to the public internet.
+    - **Simplified Network Management:** You don't need to manage firewall rules for internet traffic, NAT gateways, or complex peering connections.`,
+  },
+  {
+    id: 499,
+    slug: 'dss-and-git-secret-scanning',
+    question: 'How can Git secret scanning tools protect a Dataiku project?',
+    answer: `### 1. Introduction/Overview
+Secret scanning tools (like GitHub Advanced Security or GitGuardian) automatically scan your Git repositories for accidentally committed secrets, like API keys or passwords.
+
+### 2. How it Protects Dataiku
+- It's a common mistake for a developer to accidentally hardcode a credential in a Python recipe and commit it to Git.
+- If you have secret scanning enabled on your project's repository, the tool will immediately detect the exposed secret and alert you.
+- This allows you to revoke the compromised credential and remove it from the Git history before it can be exploited. It acts as a critical safety net to prevent accidental secret exposure.`,
+  },
+  {
+    id: 500,
+    slug: 'dss-and-reproducible-research',
+    question: 'How does Dataiku support the principles of reproducible research?',
+    answer: `### 1. Introduction/Overview
+Reproducible research is the idea that a scientific study or analysis should be published with its data and code so that other researchers can independently verify the results. Dataiku is an excellent platform for this.
+
+### 2. Key Features for Reproducibility
+- **Versioned Code Environments:** Dataiku's code environments ensure that you can always recreate the exact computational environment (with specific library versions) used for the analysis.
+- **Data Lineage:** The Flow provides a complete, transparent, and auditable record of every data preparation and transformation step.
+- **Version Control (Git):** Linking a project to Git provides a full history of all changes to code and recipes.
+- **Model Documentation:** The automatically generated model reports capture all the parameters and settings used to train a model.
+- **Bundles:** You can package the entire project into a single bundle file that can be shared with others, allowing them to re-run the entire analysis on their own Dataiku instance.`,
   },
 ];
