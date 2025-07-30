@@ -6,8 +6,8 @@ import { Footer } from '@/components/layout/footer';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'DSS QuickStart Guides',
-  description: 'How to get started with Dataiku DSS - Quick questions and answers.',
+  title: 'Rajure Ajay Kumar - Portfolio',
+  description: 'Marketing Science and Data Professional Portfolio for Rajure Ajay Kumar.',
 };
 
 export default function RootLayout({
