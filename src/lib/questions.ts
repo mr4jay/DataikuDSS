@@ -3,6 +3,9 @@ import { gettingStartedQuestions } from './getting-started-questions';
 import { migrationQuestions } from './migration-questions';
 import { mlopsQuestions } from './mlops-questions';
 import { smeQuestions } from './sme-questions';
+import { dataPrepQuestions } from './data-prep-questions';
+import { mlQuestions } from './ml-questions';
+import { automationQuestions } from './automation-questions';
 
 export interface Question {
   id: number;
@@ -20,6 +23,18 @@ const allSections: QuestionSection[] = [
   {
     title: 'Getting Started Questions',
     questions: gettingStartedQuestions,
+  },
+  {
+    title: 'Data Preparation & Transformation',
+    questions: dataPrepQuestions,
+  },
+  {
+    title: 'Machine Learning in DSS',
+    questions: mlQuestions,
+  },
+  {
+    title: 'Automation & MLOps',
+    questions: automationQuestions,
   },
   {
     title: 'MLOps Questions',
