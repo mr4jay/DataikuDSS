@@ -1,7 +1,7 @@
 import type { Question } from './questions';
 
 export const migrationQuestions: Question[] = [
-  {
+    {
     id: 201,
     slug: 'migrating-alteryx-workflows-to-dss',
     question: 'How to get started with migrating Alteryx workflows to Dataiku DSS?',
@@ -33,5 +33,51 @@ Migrating from Alteryx to Dataiku is a common task focused on centralizing data 
 - **Solution:** The logic might be achievable by combining a few Dataiku processors. If the logic is very complex, consider using a **Python recipe** as a fallback.
 - **Challenge:** The migration is slow.
 - **Solution:** Focus on migrating one logical branch of your Alteryx workflow at a time. Don't try to do it all in one go.`,
+  },
+  {
+    id: 202,
+    slug: 'translating-vba-macros-to-python',
+    question: 'How to get started with translating Excel VBA Macros to Python in DSS?',
+    answer: `### 1. Introduction/Overview
+Replacing Excel VBA macros with Python scripts in Dataiku allows for more robust, scalable, and maintainable automation. The goal is to replicate the logic of the VBA macro using Python libraries like Pandas.
+
+### 2. Prerequisites
+- The VBA macro code.
+- A Dataiku DSS project with the input Excel file uploaded as a dataset.
+
+### 3. Step-by-Step Instructions
+1.  **Understand the VBA Logic:** Read through the VBA code and document what it does step-by-step. For example: "It opens Sheet1, filters for rows where 'Region' is 'APAC', then copies the result to a new sheet called 'APAC_Report'."
+2.  **Create a Python Recipe:** In your Dataiku Flow, with the Excel dataset as input, create a new **Python recipe**.
+3.  **Load the Data:** Dataiku automatically provides starter code to load your Excel sheet into a Pandas DataFrame.
+    \`\`\`python
+    import dataiku
+    import pandas as pd
+
+    input_dataset = dataiku.Dataset("your_excel_dataset")
+    df = input_dataset.get_dataframe()
+    \`\`\`
+4.  **Replicate the Logic with Pandas:** Translate the logic from step 1 into Pandas operations.
+    \`\`\`python
+    # Replicating the filter logic
+    apac_df = df[df['Region'] == 'APAC']
+    \`\`\`
+5.  **Write the Output:** Create an output dataset in your Flow and write the resulting DataFrame to it.
+    \`\`\`python
+    output_dataset = dataiku.Dataset("APAC_Report")
+    output_dataset.write_with_schema(apac_df)
+    \`\`\`
+
+### 4. Resources and Tools
+- **Pandas Documentation:** [https://pandas.pydata.org/docs/](https://pandas.pydata.org/docs/)
+- **The original VBA code** for reference.
+
+### 5. Next Steps and Progression
+- Learn more advanced Pandas functions for data manipulation to handle more complex VBA macros.
+
+### 6. Common Challenges and Solutions
+- **Challenge:** The VBA code interacts with the Excel UI (e.g., creating pop-up boxes).
+- **Solution:** You cannot replicate UI interactions directly. Instead, focus on replicating the underlying data manipulation logic. Log messages or create datasets with validation rules to handle alerts.
+- **Challenge:** My Python code is slow.
+- **Solution:** Avoid loops where possible and use vectorized Pandas operations, which are much faster.`,
   },
 ];
