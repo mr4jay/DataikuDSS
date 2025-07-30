@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useMemo } from 'react';
 import { allQuestionSections } from '@/lib/questions';
@@ -9,6 +10,7 @@ import showdown from 'showdown';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
+import { RelatedQuestions } from './related-questions';
 
 const converter = new showdown.Converter();
 
@@ -79,7 +81,7 @@ export function QuestionList() {
             <h2 className="text-2xl font-bold mb-6 text-primary border-b pb-2">{section.title}</h2>
             <div className="space-y-4">
               {section.questions.map((q, index) => (
-                <Card key={q.id} className={completedQuestions.has(q.id) ? 'bg-muted/50' : ''}>
+                <Card id={q.slug} key={q.id} className={completedQuestions.has(q.id) ? 'bg-muted/50' : ''}>
                   <CardHeader>
                     <div className="flex items-start gap-4">
                        <div className="flex items-center h-full pt-1">
@@ -92,7 +94,7 @@ export function QuestionList() {
                       <div className="flex-1">
                         <Label htmlFor={`complete-${q.id}`} className="cursor-pointer">
                           <CardTitle className={`text-lg ${completedQuestions.has(q.id) ? 'line-through text-muted-foreground' : ''}`}>
-                             {index + 1}. {q.question}
+                             {q.id}. {q.question}
                           </CardTitle>
                         </Label>
                       </div>
@@ -103,6 +105,7 @@ export function QuestionList() {
                       className="prose prose-sm max-w-none prose-h3:text-base prose-h3:font-semibold prose-pre:bg-card prose-pre:text-card-foreground prose-code:text-foreground"
                       dangerouslySetInnerHTML={createMarkup(q.answer)}
                     />
+                    <RelatedQuestions question={q} />
                   </CardContent>
                 </Card>
               ))}
