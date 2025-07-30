@@ -975,13 +975,14 @@ Jenkins is a popular open-source automation server used for building CI/CD pipel
     >     agent any
     >     environment {
     >         // Load the API key securely
-    >         API_KEY = credentials('DATAİKU_API_KEY')
+    >        
+    
     >     }
     >     stages {
     >         stage('Run Tests') {
     >             steps {
     >                 echo 'Triggering Dataiku test scenario...'
-    >                 sh "curl -u ${API_KEY}: -X POST https://dss.mycompany.com/public/api/projects/MYPROJ/scenarios/run_tests/run"
+    >                 sh "curl : -X POST https://dss.mycompany.com/public/api/projects/MYPROJ/scenarios/run_tests/run"
     >                 // Note: A real pipeline would need to poll for job completion here
     >             }
     >         }
