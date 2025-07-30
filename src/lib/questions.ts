@@ -33,7 +33,7 @@ const allSections: QuestionSection[] = [
     questions: mlQuestions,
   },
   {
-    title: 'Automation & MLOps',
+    title: 'Automation & Deployment',
     questions: automationQuestions,
   },
   {
@@ -45,7 +45,7 @@ const allSections: QuestionSection[] = [
     questions: migrationQuestions,
   },
   {
-    title: 'Fresher Mistakes Questions',
+    title: 'Common Fresher Mistakes',
     questions: fresherMistakesQuestions,
   },
   {
