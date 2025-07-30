@@ -8,6 +8,7 @@ import { mlQuestions } from './ml-questions';
 import { automationQuestions } from './automation-questions';
 import { advancedTopicsQuestions } from './advanced-topics-questions';
 import { integrationQuestions } from './integration-questions';
+import { governanceSecurityPerformanceQuestions } from './governance-security-performance-questions';
 
 export interface Question {
   id: number;
@@ -61,6 +62,10 @@ const allSections: QuestionSection[] = [
   {
     title: 'Integration & Extensibility',
     questions: integrationQuestions,
+  },
+  {
+    title: 'Governance, Security & Performance',
+    questions: governanceSecurityPerformanceQuestions,
   }
 ];
 
