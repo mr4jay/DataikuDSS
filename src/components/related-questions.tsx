@@ -35,7 +35,7 @@ export function RelatedQuestions({ pageContent, allQuestions }: RelatedQuestions
   
   const findQuestionSlug = (questionText: string): string | null => {
     // This is a simple match, a more robust solution could use fuzzy search
-    const matchedQuestion = allQuestions.find(q => q.question.toLowerCase() === questionText.toLowerCase().replace(/\?$/, ''));
+    const matchedQuestion = allQuestions.find(q => q.question.toLowerCase().replace(/[‑-]/g, ' ') === questionText.toLowerCase().replace(/[‑-]/g, ' ').replace(/\?$/, ''));
     return matchedQuestion ? matchedQuestion.slug : null;
   }
 

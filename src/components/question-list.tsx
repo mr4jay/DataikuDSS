@@ -27,7 +27,7 @@ export function QuestionList({ questions }: QuestionListProps) {
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
         <Input
           type="text"
-          placeholder="Search 400+ questions..."
+          placeholder="Search 300+ questions..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-11 text-base h-12 rounded-lg"

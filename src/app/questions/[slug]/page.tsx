@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
-import { questions, getQuestionBySlug } from '@/lib/questions';
+import { questions as generalQuestions } from '@/lib/questions';
+import { questions as migrationQuestions } from '@/lib/migration-questions';
 import type { Metadata } from 'next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -12,8 +13,14 @@ type Props = {
   params: { slug: string };
 };
 
+const allQuestions = [...generalQuestions, ...migrationQuestions].sort((a,b) => a.id - b.id);
+
+const getQuestionBySlug = (slug: string) => {
+  return allQuestions.find(q => q.slug === slug);
+};
+
 export async function generateStaticParams() {
-  return questions.map(q => ({ slug: q.slug }));
+  return allQuestions.map(q => ({ slug: q.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -34,9 +41,9 @@ export default function QuestionPage({ params }: Props) {
     notFound();
   }
   
-  const currentIndex = questions.findIndex(q => q.id === question.id);
-  const prevQuestion = currentIndex > 0 ? questions[currentIndex - 1] : null;
-  const nextQuestion = currentIndex < questions.length - 1 ? questions[currentIndex + 1] : null;
+  const currentIndex = allQuestions.findIndex(q => q.id === question.id);
+  const prevQuestion = currentIndex > 0 ? allQuestions[currentIndex - 1] : null;
+  const nextQuestion = currentIndex < allQuestions.length - 1 ? allQuestions[currentIndex + 1] : null;
 
   const pageContent = `Question: ${question.question}\n\nAnswer: ${question.answer}`;
 
@@ -72,7 +79,7 @@ export default function QuestionPage({ params }: Props) {
 
       <Separator />
 
-      <RelatedQuestions pageContent={pageContent} allQuestions={questions} />
+      <RelatedQuestions pageContent={pageContent} allQuestions={allQuestions} />
     </div>
   );
 }
