@@ -1,5 +1,3 @@
-"use client";
-
 import { notFound } from 'next/navigation';
 import { questions as generalQuestions } from '@/lib/questions';
 import { questions as migrationQuestions } from '@/lib/migration-questions';
@@ -7,14 +5,12 @@ import { questions as fresherMistakesQuestions } from '@/lib/fresher-mistakes-qu
 import { questions as smeQuestions } from '@/lib/sme-questions';
 import { questions as mlopsQuestions } from '@/lib/mlops-questions';
 import type { Metadata } from 'next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { RelatedQuestions } from '@/components/related-questions';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import showdown from 'showdown';
+import { QuestionDisplay } from '@/components/question-display';
 
 type Props = {
   params: { slug: string };
@@ -26,8 +22,7 @@ const getQuestionBySlug = (slug: string) => {
   return allQuestions.find(q => q.slug === slug);
 };
 
-// This function needs to be outside the component to be used by generateMetadata
-async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const question = getQuestionBySlug(params.slug);
   if (!question) {
     return { title: 'Question not found' };
@@ -38,19 +33,8 @@ async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// We still export it, but we won't call it directly in the page component.
-export { generateMetadata };
-
 export default function QuestionPage({ params }: Props) {
-  const [htmlContent, setHtmlContent] = useState('');
   const question = getQuestionBySlug(params.slug);
-
-  useEffect(() => {
-    if (question) {
-      const converter = new showdown.Converter();
-      setHtmlContent(converter.makeHtml(question.answer));
-    }
-  }, [question]);
 
   if (!question) {
     notFound();
@@ -64,14 +48,7 @@ export default function QuestionPage({ params }: Props) {
 
   return (
     <div className="space-y-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl md:text-3xl font-bold">{question.question}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="prose prose-blue max-w-none text-foreground text-lg" dangerouslySetInnerHTML={{ __html: htmlContent }} />
-        </CardContent>
-      </Card>
+      <QuestionDisplay question={question} />
       
       <div className="flex justify-between items-center">
         {prevQuestion ? (
