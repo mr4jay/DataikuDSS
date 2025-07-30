@@ -1,8 +1,9 @@
-
-import { Phone, Mail, Linkedin, Github } from 'lucide-react';
+import { Phone, Mail } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Briefcase, Building, Cpu } from 'lucide-react';
+import { QuestionList } from '@/components/questions/question-list';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function PortfolioPage() {
   const experiences = [
@@ -120,6 +121,91 @@ export default function PortfolioPage() {
     },
   ];
 
+  const portfolioContent = (
+    <main className="space-y-12 mt-6">
+      <section id="about">
+        <Card>
+          <CardHeader>
+            <CardTitle>About Me</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-lg text-muted-foreground">
+              Marketing science and Data professional with 6 years of experience, specializing in workflow creation for DataOps. Proficient in Datorama and advanced Excel VBA macros to build automated reporting systems and streamline marketing data operations. Skilled at optimizing data pipelines, enhancing campaign performance, and enabling data-driven decisions across cross-functional marketing teams. Known for bridging the gap between data engineering and strategic marketing execution.
+            </p>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section id="experience">
+        <h2 className="text-3xl font-bold mb-6 text-primary border-b pb-2">Work Experience</h2>
+        <div className="space-y-8">
+          {experiences.map((exp, index) => (
+            <div key={index}>
+              <div className="flex flex-col md:flex-row justify-between items-baseline mb-2">
+                <h3 className="text-xl font-semibold">{exp.role}</h3>
+                <p className="text-sm text-muted-foreground">{exp.period}</p>
+              </div>
+              <p className="text-lg text-primary font-medium">{exp.company} | {exp.location}</p>
+              <ul className="mt-4 list-disc list-inside space-y-2 text-muted-foreground">
+                {exp.points.map((point, pIndex) => (
+                  <li key={pIndex}>{point}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+      
+      <section id="projects">
+        <h2 className="text-3xl font-bold mb-6 text-primary border-b pb-2">Dataiku DSS Projects</h2>
+        <div className="grid md:grid-cols-1 gap-6">
+          {projects.map((project, index) => (
+            <Card key={index} className="flex flex-col">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <project.icon className="h-6 w-6 text-primary" />
+                  <span>{project.title}</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <p className="text-muted-foreground mb-4">{project.description}</p>
+                <div className="flex flex-wrap gap-2">
+                  {project.tags.map(tag => (
+                    <Badge key={tag} variant={tag === 'Dataiku DSS' ? 'default' : 'secondary'} className="text-xs">{tag}</Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      <section id="skills">
+        <h2 className="text-3xl font-bold mb-6 text-primary border-b pb-2">Skills</h2>
+        <div className="flex flex-wrap gap-2">
+          {skills.map(skill => (
+            <Badge key={skill} variant="secondary" className="text-sm px-3 py-1">{skill}</Badge>
+          ))}
+        </div>
+      </section>
+
+      <section id="education">
+        <h2 className="text-3xl font-bold mb-6 text-primary border-b pb-2">Education</h2>
+        <div className="space-y-4">
+          {education.map((edu, index) => (
+            <div key={index}>
+              <div className="flex flex-col md:flex-row justify-between items-baseline">
+                <h3 className="text-lg font-semibold">{edu.degree}</h3>
+                <p className="text-sm text-muted-foreground">{edu.year}</p>
+              </div>
+              <p className="text-muted-foreground">{edu.institution}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </main>
+  );
+
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 bg-background text-foreground font-body">
       <header className="flex flex-col md:flex-row justify-between items-center mb-8 pb-4 border-b">
@@ -138,88 +224,19 @@ export default function PortfolioPage() {
           </div>
         </div>
       </header>
-
-      <main className="space-y-12">
-        <section id="about">
-          <Card>
-            <CardHeader>
-              <CardTitle>About Me</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-lg text-muted-foreground">
-                Marketing science and Data professional with 6 years of experience, specializing in workflow creation for DataOps. Proficient in Datorama and advanced Excel VBA macros to build automated reporting systems and streamline marketing data operations. Skilled at optimizing data pipelines, enhancing campaign performance, and enabling data-driven decisions across cross-functional marketing teams. Known for bridging the gap between data engineering and strategic marketing execution.
-              </p>
-            </CardContent>
-          </Card>
-        </section>
-
-        <section id="experience">
-          <h2 className="text-3xl font-bold mb-6 text-primary border-b pb-2">Work Experience</h2>
-          <div className="space-y-8">
-            {experiences.map((exp, index) => (
-              <div key={index}>
-                <div className="flex flex-col md:flex-row justify-between items-baseline mb-2">
-                  <h3 className="text-xl font-semibold">{exp.role}</h3>
-                  <p className="text-sm text-muted-foreground">{exp.period}</p>
-                </div>
-                <p className="text-lg text-primary font-medium">{exp.company} | {exp.location}</p>
-                <ul className="mt-4 list-disc list-inside space-y-2 text-muted-foreground">
-                  {exp.points.map((point, pIndex) => (
-                    <li key={pIndex}>{point}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </section>
-        
-        <section id="projects">
-          <h2 className="text-3xl font-bold mb-6 text-primary border-b pb-2">Dataiku DSS Projects</h2>
-          <div className="grid md:grid-cols-1 gap-6">
-            {projects.map((project, index) => (
-              <Card key={index} className="flex flex-col">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3">
-                    <project.icon className="h-6 w-6 text-primary" />
-                    <span>{project.title}</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <p className="text-muted-foreground mb-4">{project.description}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {project.tags.map(tag => (
-                      <Badge key={tag} variant={tag === 'Dataiku DSS' ? 'default' : 'secondary'} className="text-xs">{tag}</Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        <section id="skills">
-          <h2 className="text-3xl font-bold mb-6 text-primary border-b pb-2">Skills</h2>
-          <div className="flex flex-wrap gap-2">
-            {skills.map(skill => (
-              <Badge key={skill} variant="secondary" className="text-sm px-3 py-1">{skill}</Badge>
-            ))}
-          </div>
-        </section>
-
-        <section id="education">
-          <h2 className="text-3xl font-bold mb-6 text-primary border-b pb-2">Education</h2>
-          <div className="space-y-4">
-            {education.map((edu, index) => (
-              <div key={index}>
-                <div className="flex flex-col md:flex-row justify-between items-baseline">
-                  <h3 className="text-lg font-semibold">{edu.degree}</h3>
-                  <p className="text-sm text-muted-foreground">{edu.year}</p>
-                </div>
-                <p className="text-muted-foreground">{edu.institution}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      </main>
+      
+      <Tabs defaultValue="portfolio">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
+          <TabsTrigger value="guides">DSS QuickStart Guides</TabsTrigger>
+        </TabsList>
+        <TabsContent value="portfolio">
+          {portfolioContent}
+        </TabsContent>
+        <TabsContent value="guides">
+          <QuestionList />
+        </TabsContent>
+      </Tabs>
     </div>
   );
+}
