@@ -10,9 +10,28 @@ export interface Question {
   answer: string;
 }
 
-export const allQuestions: Question[] = [
-  ...fresherMistakesQuestions,
-  ...migrationQuestions,
-  ...mlopsQuestions,
-  ...smeQuestions,
-].sort((a, b) => a.id - b.id);
+export interface QuestionSection {
+  title: string;
+  questions: Question[];
+}
+
+export const allQuestionSections: QuestionSection[] = [
+  {
+    title: 'MLOps Questions',
+    questions: mlopsQuestions.sort((a,b) => a.id - b.id),
+  },
+  {
+    title: 'Migration Questions',
+    questions: migrationQuestions.sort((a,b) => a.id - b.id),
+  },
+  {
+    title: 'Fresher Mistakes Questions',
+    questions: fresherMistakesQuestions.sort((a,b) => a.id - b.id),
+  },
+  {
+    title: 'SME Questions',
+    questions: smeQuestions.sort((a,b) => a.id - b.id),
+  }
+];
+
+export const allQuestions: Question[] = allQuestionSections.flatMap(section => section.questions);
