@@ -1,3 +1,5 @@
+"use client";
+
 import { notFound } from 'next/navigation';
 import { questions as generalQuestions } from '@/lib/questions';
 import { questions as migrationQuestions } from '@/lib/migration-questions';
@@ -11,6 +13,8 @@ import { RelatedQuestions } from '@/components/related-questions';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import showdown from 'showdown';
 
 type Props = {
   params: { slug: string };
@@ -22,11 +26,8 @@ const getQuestionBySlug = (slug: string) => {
   return allQuestions.find(q => q.slug === slug);
 };
 
-export async function generateStaticParams() {
-  return allQuestions.map(q => ({ slug: q.slug }));
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+// This function needs to be outside the component to be used by generateMetadata
+async function generateMetadata({ params }: Props): Promise<Metadata> {
   const question = getQuestionBySlug(params.slug);
   if (!question) {
     return { title: 'Question not found' };
@@ -37,8 +38,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+// We still export it, but we won't call it directly in the page component.
+export { generateMetadata };
+
 export default function QuestionPage({ params }: Props) {
+  const [htmlContent, setHtmlContent] = useState('');
   const question = getQuestionBySlug(params.slug);
+
+  useEffect(() => {
+    if (question) {
+      const converter = new showdown.Converter();
+      setHtmlContent(converter.makeHtml(question.answer));
+    }
+  }, [question]);
 
   if (!question) {
     notFound();
@@ -57,7 +69,7 @@ export default function QuestionPage({ params }: Props) {
           <CardTitle className="text-2xl md:text-3xl font-bold">{question.question}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="prose prose-blue max-w-none text-foreground text-lg" dangerouslySetInnerHTML={{ __html: question.answer.replace(/\n/g, '<br />') }} />
+          <div className="prose prose-blue max-w-none text-foreground text-lg" dangerouslySetInnerHTML={{ __html: htmlContent }} />
         </CardContent>
       </Card>
       
@@ -85,4 +97,8 @@ export default function QuestionPage({ params }: Props) {
       <RelatedQuestions pageContent={pageContent} allQuestions={allQuestions} />
     </div>
   );
+}
+
+export async function generateStaticParams() {
+  return allQuestions.map(q => ({ slug: q.slug }));
 }
