@@ -1,3 +1,4 @@
+
 import type { Question } from './questions';
 
 export const integrationQuestions: Question[] = [
@@ -953,5 +954,730 @@ Integrating with a graph database like Neo4j allows you to perform graph-specifi
 - **Read/Write Data:**
     - **Writing:** You can take a tabular dataset from Dataiku (e.g., a list of transactions) and write Python code to convert it into nodes and relationships and load it into Neo4j.
     - **Reading:** You can run a Cypher query against Neo4j, get the results, and write them back to a tabular Dataiku dataset for further analysis or to join with other data.`,
+  },
+  {
+    id: 326,
+    slug: 'using-dss-with-gitlab-ci',
+    question: 'How do I set up a CI/CD pipeline for Dataiku projects using GitLab CI?',
+    answer: `### 1. Introduction/Overview
+GitLab CI can automate the deployment of Dataiku projects by using the Dataiku API.
+
+### 2. .gitlab-ci.yml Example
+\`\`\`yaml
+stages:
+  - deploy
+
+deploy_to_automation:
+  stage: deploy
+  script:
+    - 'apt-get update && apt-get install -y python3-pip'
+    - 'pip3 install dataiku-api-client'
+    - 'python3 deploy_script.py'
+  only:
+    - main
+\`\`\`
+The \`deploy_script.py\` would contain Python code using the \`dataiku-api-client\` to create a bundle from the dev project and deploy it to the automation node. You would store Dataiku hostnames and API keys in GitLab's CI/CD variables.`,
+  },
+  {
+    id: 327,
+    slug: 'using-dss-with-github-actions',
+    question: 'How do I set up a CI/CD pipeline for Dataiku projects using GitHub Actions?',
+    answer: `### 1. Introduction/Overview
+GitHub Actions provides a native way to automate Dataiku deployments from a GitHub repository.
+
+### 2. Workflow File Example
+\`\`\`yaml
+name: Deploy DSS Project
+on:
+  push:
+    branches: [ main ]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out repo
+      uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+    - name: Install DSS API client
+      run: pip install dataiku-api-client
+    - name: Run Deployment Script
+      env:
+        DSS_HOST: \${{ secrets.DSS_HOST }}
+        API_KEY: \${{ secrets.API_KEY }}
+      run: python deploy_script.py
+\`\`\`
+The logic is similar to GitLab CI: a Python script handles the bundling and deployment, and secrets are managed by the CI/CD platform.`,
+  },
+  {
+    id: 328,
+    slug: 'using-dss-with-jenkins',
+    question: 'How do I set up a CI/CD pipeline for Dataiku projects using Jenkins?',
+    answer: `### 1. Introduction/Overview
+Jenkins is a classic choice for orchestrating Dataiku deployments.
+
+### 2. Jenkinsfile Example
+\`\`\`groovy
+pipeline {
+    agent any
+    stages {
+        stage('Deploy') {
+            steps {
+                script {
+                    // Assuming the Jenkins agent has Python and pip installed
+                    sh 'pip install dataiku-api-client'
+                    // Use Jenkins credentials binding for the API key
+                    withCredentials([string(credentialsId: 'DSS_API_KEY', variable: 'API_KEY')]) {
+                        sh 'python deploy_script.py --api-key $API_KEY'
+                    }
+                }
+            }
+        }
+    }
+}
+\`\`\`
+The Jenkins pipeline checks out the project from Git and executes a Python script to perform the deployment, using Jenkins' built-in credential management.`,
+  },
+  {
+    id: 329,
+    slug: 'data-validation-in-ci-cd',
+    question: 'How do I add automated data validation tests to my CI/CD pipeline?',
+    answer: `### 1. Introduction/Overview
+Automated testing is crucial before deploying a project to production. This is done by running a test scenario.
+
+### 2. CI/CD Integration
+1.  **Create a Test Scenario:** In your Dataiku project, create a scenario named, for example, "CI_Tests". This scenario should build key datasets and have "Check" steps to validate data quality (e.g., row counts, schema validity, value ranges). Configure the scenario to fail if any check is violated.
+2.  **Trigger from CI/CD:** After your CI/CD pipeline deploys the project bundle to the Test/QA node, add a step that uses the Dataiku API to trigger the "CI_Tests" scenario.
+3.  **Check Outcome:** The script should wait for the scenario run to complete and check its outcome. If the outcome is "FAILED", the CI/CD pipeline should fail, preventing deployment to production.`,
+  },
+  {
+    id: 330,
+    slug: 'model-validation-in-ci-cd',
+    question: 'How do I add automated model validation tests to my CI/CD pipeline?',
+    answer: `### 1. Introduction/Overview
+Beyond data quality, you need to validate the model's performance automatically.
+
+### 2. CI/CD Integration
+1.  **Create a Validation Scenario:** In your project, create a scenario. This scenario will use a **Model Evaluation recipe**.
+2.  **Evaluation Step:** The recipe will take your newly trained model and score it against a labeled, hold-out validation dataset. The recipe's output is a metrics dataset.
+3.  **Check Metrics:** Add a step to the scenario that runs checks on this metrics dataset (e.g., "AUC must be > 0.85", "RMSE must be < 100").
+4.  **Trigger from CI/CD:** Your CI/CD pipeline, after deploying to the Test node, triggers this model validation scenario. If the scenario fails because a performance check is not met, the pipeline fails, stopping the deployment.`,
+  },
+  {
+    id: 331,
+    slug: 'api-testing-in-ci-cd',
+    question: 'How do I automate the testing of a model API during deployment?',
+    answer: `### 1. Introduction/Overview
+After deploying a new model version to the API Deployer on a Test/QA node, you need to test it before it goes live.
+
+### 2. CI/CD Integration
+1.  **Deploy to QA API Node:** Your CI/CD pipeline deploys the new model version to the API Deployer.
+2.  **Run Test Script:** The pipeline then runs a script (e.g., Python using \`requests\`) that sends a set of predefined test queries to the new model's API endpoint.
+3.  **Assert Responses:** The script asserts that the API returns the expected HTTP status codes (e.g., 200 OK) and that the prediction responses are in the correct format and within a plausible range.
+4.  If any assertion fails, the script exits with an error code, which fails the CI/CD pipeline.`,
+  },
+  {
+    id: 332,
+    slug: 'managing-multiple-remotes',
+    question: 'Can a Dataiku project be linked to multiple Git remotes?',
+    answer: `### 1. Introduction/Overview
+No, a single Dataiku project can only be linked to one Git remote at a time. The standard practice is for a project on a specific Dataiku instance to be linked to a corresponding branch in a central repository.
+
+### 2. Standard Branching Strategy
+- **Dev Instance:** The project is linked to the \`develop\` branch.
+- **QA Instance:** The project is linked to a \`release\` or \`qa\` branch.
+- **Prod Instance:** The project is linked to the \`main\` or \`master\` branch.
+The promotion of code from one environment to another is managed through pull requests and merges in Git, which then triggers the CI/CD pipeline to deploy the correct branch to the corresponding Dataiku instance.`,
+  },
+  {
+    id: 333,
+    slug: 'dss-and-terraform',
+    question: 'Can I manage Dataiku infrastructure using Terraform?',
+    answer: `### 1. Introduction/Overview
+Yes, using an Infrastructure-as-Code tool like Terraform is the best practice for managing the cloud resources that Dataiku runs on.
+
+### 2. What to Manage with Terraform
+- **Compute Instances:** The EC2 instances (AWS), Virtual Machines (Azure), or Compute Engine instances (GCP) that run the Dataiku nodes.
+- **Networking:** The VPCs, subnets, security groups, and load balancers.
+- **Storage:** The EBS volumes (AWS) or persistent disks for the Dataiku Data Directory.
+- **Databases:** The managed database service (like AWS RDS or Azure Database for PostgreSQL) for the Dataiku backend.
+By defining all these resources in Terraform, you can create, update, and replicate your Dataiku environments in a consistent and automated way.`,
+  },
+  {
+    id: 334,
+    slug: 'dss-and-ansible',
+    question: 'Can I use Ansible to configure a Dataiku instance?',
+    answer: `### 1. Introduction/Overview
+Yes, a configuration management tool like Ansible is excellent for the initial installation and configuration of the Dataiku software itself.
+
+### 2. Ansible Use Cases
+- **Install Dependencies:** Ensure the host machine has the correct prerequisites (e.g., Java, Python, Nginx).
+- **Install Dataiku Software:** Automate the process of downloading and running the Dataiku installer.
+- **Initial Configuration:** Configure file permissions, set up the Dataiku user, and manage the systemd service for running Dataiku.
+- **Configuration-as-Code:** While Terraform manages the underlying infrastructure, Ansible manages the software configuration on that infrastructure.`,
+  },
+  {
+    id: 335,
+    slug: 'dss-and-packer',
+    question: 'How can Packer be used with Dataiku?',
+    answer: `### 1. Introduction/Overview
+Packer is a tool for creating identical machine images (e.g., AMIs in AWS) for multiple platforms from a single source configuration.
+
+### 2. Use Case with Dataiku
+- You can use Packer to create a "golden image" for your Dataiku nodes.
+- You define a Packer template that starts with a base OS, then uses a provisioner (like Ansible) to install all the necessary dependencies and the Dataiku software itself.
+- Packer then saves this as a machine image.
+- When you need to launch a new Dataiku node (e.g., with Terraform), you can launch it from this pre-baked golden image. This makes startup times much faster and ensures every node is identical.`,
+  },
+  {
+    id: 336,
+    slug: 'cross-project-dependencies-in-ci-cd',
+    question: 'How do you handle cross-project dependencies in a CI/CD pipeline?',
+    answer: `### 1. Introduction/Overview
+This is a complex orchestration challenge. If Project B depends on a dataset from Project A, you need to ensure Project A is deployed and up-to-date before Project B is deployed and tested.
+
+### 2. CI/CD Strategy
+- **Trigger Chaining:** Your CI/CD tool needs to manage the dependency graph. A successful deployment of Project A should automatically trigger the CI/CD pipeline for Project B.
+- **Using APIs to Check Status:** The pipeline for Project B should start by using the Dataiku API to check the status of the required dataset from Project A on the target instance. It should verify that the dataset was built recently and successfully before proceeding with its own tests.
+- **Monorepos (Advanced):** Some organizations manage this by putting multiple related Dataiku projects into a single Git repository (a "monorepo"). This way, a change to Project A and a corresponding change to Project B can be part of the same commit, and the CI/CD pipeline can be designed to understand the dependency and deploy them in the correct order.`,
+  },
+  {
+    id: 337,
+    slug: 'api-key-rotation',
+    question: 'What is the best practice for managing and rotating API keys for CI/CD?',
+    answer: `### 1. Introduction/Overview
+API keys used by automation systems should be treated as sensitive secrets and rotated regularly.
+
+### 2. Best Practices
+1.  **Dedicated Service Account:** Create a dedicated "service account" user in Dataiku for your CI/CD tool (e.g., a user named \`jenkins-ci\`). Do not use a personal user's API key.
+2.  **Least Privilege:** Grant this service account only the minimum permissions it needs to perform its job (e.g., create bundles, deploy to specific nodes).
+3.  **Store in a Secret Manager:** Store the API key in the secret manager of your CI/CD tool (e.g., Jenkins Credentials, GitHub Secrets, AWS Secrets Manager). Do not hardcode it in scripts.
+4.  **Rotation Policy:** Have a policy to regularly delete the old API key in Dataiku and generate a new one. Update the value in your secret manager. This can be automated using the Dataiku API itself.`,
+  },
+  {
+    id: 338,
+    slug: 'rollback-strategy',
+    question: 'What is a good rollback strategy for a failed deployment?',
+    answer: `### 1. Introduction/Overview
+If a deployment to production fails or causes issues, you need a fast and reliable way to revert to the last known good state.
+
+### 2. Rollback Steps
+- **For Batch Pipelines (Automation Node):**
+    1. The CI/CD pipeline should be configured to stop a failed deployment.
+    2. The previous, stable version of the project bundle should be kept in an artifact repository.
+    3. To roll back, you re-run the deployment job but use the previous version's bundle.
+- **For Real-time APIs (API Deployer):**
+    1. This is simpler. In the API Deployer UI or via its API, you can simply **"Activate"** the previous, stable version of the API service.
+    2. The API Deployer will switch the live traffic back to the old model version with zero downtime.`,
+  },
+  {
+    id: 339,
+    slug: 'dss-and-vault',
+    question: 'How do I integrate Dataiku with HashiCorp Vault for secret management?',
+    answer: `### 1. Introduction/Overview
+Using a dedicated secret manager like Vault is the most secure method for handling credentials.
+
+### 2. Integration
+1.  **Plugin/Backend:** Dataiku provides a backend to connect to Vault. An administrator installs and configures this in the global settings.
+2.  **Authentication:** The Dataiku instance authenticates to Vault using one of Vault's supported authentication methods (e.g., AppRole, Kubernetes Auth).
+3.  **Secret Lookup:** When a recipe or connection needs a secret (e.g., a database password), you configure it to look up the secret from Vault using a specific path (e.g., \`vault:secret/data/postgres#password\`).
+4.  **Runtime Fetching:** At runtime, Dataiku calls the Vault API to fetch the secret just-in-time. The secret is never stored on the Dataiku instance itself.`,
+  },
+  {
+    id: 340,
+    slug: 'dss-and-aws-secrets-manager',
+    question: 'How do I integrate Dataiku with AWS Secrets Manager?',
+    answer: `### 1. Introduction/Overview
+The integration with AWS Secrets Manager is conceptually identical to the Vault integration.
+
+### 2. Integration
+1.  **IAM Role:** The Dataiku EC2 instance must have an IAM role that grants it permission to read secrets from AWS Secrets Manager.
+2.  **Admin Configuration:** An administrator enables the AWS Secrets Manager backend in Dataiku's settings.
+3.  **Secret Lookup:** In connection settings, you replace the hardcoded password with a lookup path syntax specific to AWS Secrets Manager.
+4.  At runtime, Dataiku uses the AWS SDK to call the Secrets Manager API and retrieve the secret.`,
+  },
+  {
+    id: 341,
+    slug: 'dss-and-azure-key-vault',
+    question: 'How do I integrate Dataiku with Azure Key Vault?',
+    answer: `### 1. Introduction/Overview
+Azure Key Vault provides a secure way to store and manage secrets in Azure.
+
+### 2. Integration
+1.  **Service Principal/Managed Identity:** The Dataiku instance needs an identity (a Service Principal or Managed Identity) that has been granted access to the Key Vault.
+2.  **Admin Configuration:** An administrator enables the Azure Key Vault backend in Dataiku's settings.
+3.  **Secret Lookup:** In connection or recipe settings, you use a specific syntax to tell Dataiku to fetch a secret from the Key Vault.
+4.  At runtime, Dataiku uses the Azure SDK to authenticate and retrieve the secret, which is never stored on disk in Dataiku.`,
+  },
+  {
+    id: 342,
+    slug: 'dss-and-okta-integration',
+    question: 'How do I set up SSO for Dataiku using Okta?',
+    answer: `### 1. Introduction/Overview
+Okta is a popular identity provider that can be used for Single Sign-On (SSO) with Dataiku.
+
+### 2. Setup (SAML)
+1.  **In Okta:** An Okta administrator creates a new "Application" for Dataiku. They configure it as a SAML application, providing details about the Dataiku instance (like the Assertion Consumer Service URL).
+2.  **In Dataiku:** A Dataiku administrator goes to **Administration > Security > Single Sign-On**. They enable SAML and provide the information from Okta (like the IdP metadata URL and certificate).
+3.  **User Login:** When a user navigates to the Dataiku URL, they will be redirected to Okta to log in. After successful authentication, Okta sends a SAML assertion back to Dataiku, and the user is logged in.`,
+  },
+  {
+    id: 343,
+    slug: 'dss-and-azure-ad-sso',
+    question: 'How do I set up SSO for Dataiku using Azure Active Directory?',
+    answer: `### 1. Introduction/Overview
+You can use Azure AD as an SSO provider for Dataiku, typically using the SAML or OpenID Connect protocol.
+
+### 2. Setup (SAML)
+1.  **In Azure AD:** An administrator creates a new "Enterprise Application" for Dataiku. They configure the SAML settings, defining the identifier (Entity ID) and reply URL for the Dataiku instance.
+2.  **In Dataiku:** The Dataiku administrator enables SAML-based SSO and provides the metadata from the Azure AD application (like the Login URL and certificate).
+3.  This setup enables a seamless login experience where users authenticate with their standard Microsoft 365 / Azure credentials.`,
+  },
+  {
+    id: 344,
+    slug: 'using-the-dss-cli',
+    question: 'What are some key commands in the Dataiku DSS command-line interface (CLI)?',
+    answer: `### 1. Introduction/Overview
+The CLI, accessed via \`bin/dsscli\`, allows for scripting administrative tasks.
+
+### 2. Key Commands
+- \`dsscli project-bundle-export <projectKey> <path>\`: Creates a project bundle.
+- \`dsscli project-bundle-import <path>\`: Imports a bundle to create a new project.
+- \`dsscli scenario-run <projectKey>.<scenarioId>\`: Triggers a scenario.
+- \`dsscli user-create <login> --password <password>\`: Creates a new user.
+- \`dsscli group-list-users <groupName>\`: Lists the users in a group.
+- \`dsscli connection-list\`: Lists all global data connections.
+
+This tool is essential for integrating Dataiku into larger automation scripts.`,
+  },
+  {
+    id: 345,
+    slug: 'what-is-governor',
+    question: 'What is the Dataiku Governor?',
+    answer: `### 1. Introduction/Overview
+The Dataiku Governor is a separate, dedicated product in the Dataiku suite for centralized, enterprise-wide AI governance. It sits "above" individual Dataiku instances.
+
+### 2. Key Functions
+- **Central Model Registry:** It provides a single, unified registry for all models deployed across all Dataiku instances in the organization.
+- **Unified Monitoring:** It aggregates performance and drift monitoring data from all production models into a single dashboard.
+- **Workflow and Approvals:** It allows you to design and enforce standardized model review and approval workflows that must be completed before a model can be deployed to production.
+- **Business-level Reporting:** It provides dashboards for business leaders to understand the overall health, risk, and value of the organization's AI portfolio.`,
+  },
+  {
+    id: 346,
+    slug: 'dss-vs-governor',
+    question: 'What is the difference between governance features in DSS and the Dataiku Governor?',
+    answer: `### 1. Introduction/Overview
+It's a matter of scope: project-level vs. enterprise-level.
+
+### 2. Comparison
+- **Governance in DSS:** The features within a standard Dataiku DSS instance (permissions, audit trails, model documentation) are designed to govern the projects and assets *within that single instance*. It's for the development and project teams.
+- **Dataiku Governor:** The Governor is for *centralized, cross-instance governance*. It connects to multiple DSS instances and provides a single pane of glass for senior management, risk, and compliance teams to oversee the entire AI lifecycle across the whole organization.`,
+  },
+  {
+    id: 347,
+    slug: 'dss-on-eks',
+    question: 'What are the best practices for deploying Dataiku on Amazon EKS (Elastic Kubernetes Service)?',
+    answer: `### 1. Introduction/Overview
+EKS is an ideal platform for running a scalable and resilient Dataiku installation.
+
+### 2. Best Practices
+- **Use the Official Helm Chart:** Dataiku provides an official Helm chart that simplifies the deployment of all the necessary components (backend, frontend, pods for containerized execution) to an EKS cluster.
+- **Use Managed Node Groups:** Use EKS Managed Node Groups with autoscaling enabled to allow the cluster to automatically add or remove nodes based on the workload.
+- **Use a Managed Database:** Connect Dataiku to Amazon RDS for PostgreSQL for the backend database.
+- **Use a Shared File System:** Use Amazon EFS (Elastic File System) for the Dataiku Data Directory so it can be shared across multiple backend pods for high availability.
+- **Integrate with IAM:** Use IAM roles for service accounts (IRSA) to give Dataiku pods secure access to other AWS services like S3.`,
+  },
+  {
+    id: 348,
+    slug: 'dss-on-aks',
+    question: 'What are the best practices for deploying Dataiku on Azure Kubernetes Service (AKS)?',
+    answer: `### 1. Introduction/Overview
+AKS is Microsoft's managed Kubernetes service and a great choice for deploying Dataiku on Azure.
+
+### 2. Best Practices
+- **Use the Official Helm Chart:** Start with the official Dataiku Helm chart for deployment.
+- **Enable Cluster Autoscaler:** Configure the AKS cluster autoscaler to manage the size of your node pools dynamically.
+- **Use Azure Database for PostgreSQL:** Use a managed database service for the Dataiku backend.
+- **Use Azure Files:** Use Azure Files (with the Premium tier for performance) as the shared storage for the Dataiku Data Directory for high availability.
+- **Use Managed Identities:** Use Azure AD Pod-Managed Identities to give Dataiku pods a secure identity for accessing other Azure resources like Blob Storage.`,
+  },
+  {
+    id: 349,
+    slug: 'dss-on-gke',
+    question: 'What are the best practices for deploying Dataiku on Google Kubernetes Engine (GKE)?',
+    answer: `### 1. Introduction/Overview
+GKE is Google's managed Kubernetes offering and is fully supported for Dataiku deployments.
+
+### 2. Best Practices
+- **Use the Official Helm Chart:** The Dataiku Helm chart is the recommended way to deploy.
+- **Use Cluster Autoscaler:** Enable autoscaling on your GKE node pools.
+- **Use Cloud SQL for PostgreSQL:** Use Google's managed PostgreSQL service for the Dataiku backend.
+- **Use Filestore:** Use Google Cloud Filestore as the shared NFS-based storage for the Dataiku Data Directory for HA setups.
+- **Use Workload Identity:** Use GKE Workload Identity to securely associate a Kubernetes service account with a GCP service account, allowing pods to access GCP services without needing to manage service account keys.`,
+  },
+  {
+    id: 350,
+    slug: 'dss-and-openshift',
+    question: 'Can Dataiku be deployed on Red Hat OpenShift?',
+    answer: `### 1. Introduction/Overview
+Yes, OpenShift is a supported platform for deploying Dataiku. OpenShift is a Kubernetes distribution with additional enterprise features for security and management.
+
+### 2. Deployment
+- Dataiku provides specific documentation and deployment guides for OpenShift.
+- The deployment process typically uses the Dataiku Helm chart or OpenShift Operators.
+- Key considerations include configuring OpenShift's stricter security contexts (SCCs) and using OpenShift Container Storage or another compatible shared storage solution for the Data Directory.`,
+  },
+  {
+    id: 351,
+    slug: 'artifact-repository-for-bundles',
+    question: 'What is a good artifact repository for storing Dataiku project bundles?',
+    answer: `### 1. Introduction/Overview
+As part of a mature CI/CD process, you should store the versioned project bundles (\`.zip\` files) in a dedicated artifact repository.
+
+### 2. Common Choices
+- **JFrog Artifactory:** A universal artifact manager that can store generic file types, making it a perfect fit for Dataiku bundles.
+- **Sonatype Nexus:** Another popular universal repository manager that works well for this purpose.
+- **Cloud-based Options:**
+    - **AWS:** You can simply use a versioned S3 bucket.
+    - **Azure:** Use Azure Artifacts with a Universal Packages feed.
+    - **GCP:** Use Artifact Registry with a generic repository format.
+Storing bundles this way gives you a reliable, versioned history of all your deployments.`,
+  },
+  {
+    id: 352,
+    slug: 'api-gateway-for-dss-api',
+    question: 'Should I use an API Gateway in front of the Dataiku API node?',
+    answer: `### 1. Introduction/Overview
+Yes, for production use, placing an API Gateway (like Amazon API Gateway, Azure API Management, or a self-hosted one like Kong) in front of the Dataiku API node is a strong best practice.
+
+### 2. Key Benefits
+- **Centralized Authentication:** The gateway can handle authentication and authorization, offloading that from Dataiku.
+- **Rate Limiting and Throttling:** Protect your Dataiku API node from being overwhelmed by too many requests.
+- **Request/Response Transformation:** The gateway can transform requests into the format expected by the Dataiku API, or transform the response for the client.
+- **Centralized Logging and Monitoring:** Consolidate all API call logs and metrics in one place.
+- **Canary Releases:** The gateway can manage the traffic splitting required for canary deployments.`,
+  },
+  {
+    id: 353,
+    slug: 'managed-vs-unmanaged-folders',
+    question: 'What is the difference between a managed folder and an unmanaged folder?',
+    answer: `### 1. Introduction/Overview
+This distinction relates to who controls the lifecycle of the folder's contents.
+
+### 2. Differences
+- **Managed Folder:** This is a standard Dataiku object in the Flow. It is intended to be the **output** of a Dataiku recipe. Dataiku "manages" its content, meaning it knows how to (re)generate the files within it by running the upstream recipe. Its primary use is for storing non-tabular outputs like saved models, images, or reports generated by a recipe.
+- **Unmanaged Folder:** This folder points to a location (e.g., on a filesystem or in cloud storage) where files are created by an **external** process, outside of Dataiku's control. Dataiku can read from this folder, but it does not know how to create or update its contents. It is used as a source of files for a Dataiku pipeline.`,
+  },
+  {
+    id: 354,
+    slug: 'real-time-streaming-pipelines',
+    question: 'What are the key components for building a real-time streaming pipeline in Dataiku?',
+    answer: `### 1. Introduction/Overview
+Dataiku can build pipelines that process data in real-time as it arrives.
+
+### 2. Key Components
+1.  **Streaming Endpoint Connection:** A connection to a message bus like Apache Kafka or AWS Kinesis.
+2.  **Streaming Dataset:** A dataset that is configured to read continuously from a topic on the message bus.
+3.  **Streaming-Compatible Recipes:** You cannot use all standard recipes. The primary recipe is **"Stream with Python"**, where you write Python code that processes micro-batches of messages as they arrive. There are also some streaming-compatible visual recipes.
+4.  **Streaming Job:** The streaming pipeline is run as a continuous job in Dataiku, which is different from a standard batch scenario.
+5.  **Sink:** The output of the pipeline, which can be another streaming dataset (e.g., writing to another Kafka topic) or a standard dataset (e.g., appending aggregated results to a database table).`,
+  },
+  {
+    id: 355,
+    slug: 'dss-and-google-dataproc',
+    question: 'How can I use Google Cloud Dataproc as a Spark engine for Dataiku?',
+    answer: `### 1. Introduction/Overview
+Dataproc is Google Cloud's managed service for Spark and Hadoop. Dataiku can use it as a powerful, ephemeral Spark backend.
+
+### 2. How it Works
+1.  **Admin Configures Connection:** A Dataiku administrator configures a connection to Dataproc in the instance settings.
+2.  **Ephemeral Clusters:** The integration is often configured to create ephemeral clusters. When a user runs a Spark recipe, Dataiku uses the Dataproc API to spin up a new Spark cluster just for that job.
+3.  **Job Execution:** The Spark job runs on the newly created cluster.
+4.  **Cluster Termination:** Once the job is finished, the cluster is automatically terminated.
+This is a very cost-effective model, as you only pay for the cluster resources while the job is actually running.`,
+  },
+  {
+    id: 356,
+    slug: 'dss-and-aws-emr',
+    question: 'How can I use Amazon EMR as a Spark engine for Dataiku?',
+    answer: `### 1. Introduction/Overview
+EMR (Elastic MapReduce) is AWS's managed Hadoop and Spark service. The integration pattern is very similar to Google Dataproc.
+
+### 2. How it Works
+1.  **Admin Configures Connection:** The administrator configures the EMR connection in Dataiku's settings.
+2.  **Ephemeral Clusters:** The most common pattern is to use ephemeral clusters. When a Spark job is launched from Dataiku, it calls the EMR API to provision a new EMR cluster.
+3.  **Job Execution:** The job runs on the EMR cluster, using data typically stored in S3.
+4.  **Cluster Termination:** The cluster is automatically shut down after the job completes, minimizing costs.
+This allows users to leverage the massive scale of EMR for heavy-duty processing without leaving the Dataiku UI.`,
+  },
+  {
+    id: 357,
+    slug: 'dss-and-azure-hdinsight',
+    question: 'How can I use Azure HDInsight as a Spark engine for Dataiku?',
+    answer: `### 1. Introduction/Overview
+HDInsight is Azure's managed service for open-source analytics frameworks like Spark and Hadoop.
+
+### 2. Integration
+- Dataiku can be configured to use an HDInsight cluster as its Spark execution engine.
+- When a user runs a Spark-compatible recipe, Dataiku submits the job to the HDInsight cluster for processing.
+- This allows you to leverage Azure's cloud infrastructure for large-scale data transformation and analysis, using data often stored in Azure Blob Storage or Azure Data Lake Storage.`,
+  },
+  {
+    id: 358,
+    slug: 'dataiku-and-dremio',
+    question: 'How does Dataiku integrate with Dremio?',
+    answer: `### 1. Introduction/Overview
+Dremio is a data lakehouse platform that provides a fast SQL query layer on top of data lake storage.
+
+### 2. Integration
+- You can connect Dataiku to Dremio using a standard JDBC/ODBC connection.
+- This allows you to use Dremio as a high-performance data source for your Dataiku projects.
+- In Dataiku, you can create datasets that point to Dremio Virtual Datasets (VDS).
+- When you run a SQL recipe against a Dremio dataset in Dataiku, the query is pushed down to Dremio for execution, leveraging Dremio's query acceleration and data reflection features.`,
+  },
+  {
+    id: 359,
+    slug: 'dataiku-and-starburst',
+    question: 'How does Dataiku integrate with Starburst?',
+    answer: `### 1. Introduction/Overview
+Starburst is an enterprise-grade data analytics engine based on the open-source Trino (formerly PrestoSQL) project. It's designed for fast, federated queries across multiple data sources.
+
+### 2. Integration
+- Dataiku connects to Starburst via a JDBC connection.
+- The integration allows Dataiku users to leverage Starburst's key capability: running a single SQL query in Dataiku that joins data from disparate systems (e.g., joining a table in Hive with a table in a relational database and a file in S3).
+- Dataiku pushes the query down to Starburst, which then handles the complex task of querying the underlying sources and performing the distributed join.`,
+  },
+  {
+    id: 360,
+    slug: 'dataiku-and-minio',
+    question: 'Can I use MinIO as an S3-compatible storage backend?',
+    answer: `### 1. Introduction/Overview
+Yes. MinIO is an open-source, high-performance object storage system that is fully compatible with the Amazon S3 API. It's often used for on-premise or private cloud S3-like storage.
+
+### 2. Integration
+1.  In Dataiku, you configure a standard S3 connection.
+2.  However, instead of using the default AWS endpoint, you specify the endpoint URL of your MinIO server.
+3.  You provide the access key and secret key from your MinIO instance.
+4.  From that point on, Dataiku can interact with MinIO just as it would with AWS S3, allowing you to read and write datasets to your on-premise object store.`,
+  },
+  {
+    id: 361,
+    slug: 'dataiku-and-pytorch',
+    question: 'How do I use PyTorch for deep learning models in Dataiku?',
+    answer: `### 1. Introduction/Overview
+PyTorch is a popular open-source deep learning framework. It can be used in Dataiku for building custom models.
+
+### 2. How to Use
+1.  **Create a Code Environment:** An administrator creates a code environment with the necessary libraries installed (\`torch\`, \`torchvision\`, etc.). For serious training, this should be a GPU-enabled environment.
+2.  **Develop in a Notebook:** Use a Jupyter notebook in Dataiku to interactively develop your PyTorch model. This includes defining the neural network architecture, the data loading pipeline, and the training loop.
+3.  **Save the Trained Model:** After training, save the model's state dictionary (\`model.state_dict()\`) to a file in a managed folder.
+4.  **Create a Scoring Recipe:** Create a Python recipe for inference. This recipe loads the saved model state, takes a new dataset as input, and uses the model to generate predictions.`,
+  },
+  {
+    id: 362,
+    slug: 'dataiku-and-tensorflow',
+    question: 'How do I use TensorFlow for deep learning models in Dataiku?',
+    answer: `### 1. Introduction/Overview
+TensorFlow is another leading deep learning framework. The workflow is very similar to using PyTorch.
+
+### 2. How to Use
+1.  **Set up Code Environment:** Create a code environment with TensorFlow installed (\`tensorflow\` or \`tensorflow-gpu\`).
+2.  **Develop in a Notebook:** Build and train your model using the Keras API within TensorFlow.
+3.  **Save the Trained Model:** Save the entire trained model using \`model.save('path/to/model')\`, which saves the architecture, weights, and training configuration into a folder. This folder should be in a managed folder in Dataiku.
+4.  **Create a Scoring Recipe:** Create a Python recipe that loads the model using \`tf.keras.models.load_model('path/to/model')\` and then uses it to make predictions on new data.`,
+  },
+  {
+    id: 363,
+    slug: 'dataiku-and-hugging-face',
+    question: 'How can I use Hugging Face Transformers in Dataiku?',
+    answer: `### 1. Introduction/Overview
+The Hugging Face Transformers library is the de-facto standard for state-of-the-art NLP models.
+
+### 2. How to Use
+1.  **Code Environment:** Create a code environment with the \`transformers\` library installed (and also \`torch\` or \`tensorflow\` as it requires one of them).
+2.  **Python Recipe/Notebook:** In a Python recipe, you can easily load a pre-trained model and tokenizer from the Hugging Face Hub.
+    \`\`\`python
+    from transformers import pipeline
+
+    # Load a pre-trained pipeline for sentiment analysis
+    classifier = pipeline('sentiment-analysis')
+    
+    # Use it on text data from your dataset
+    results = classifier("Dataiku is a great platform!")
+    # [{'label': 'POSITIVE', 'score': 0.9999}]
+    \`\`\`
+3.  This allows you to perform tasks like text classification, named entity recognition, and summarization on your datasets with very little code.`,
+  },
+  {
+    id: 364,
+    slug: 'dataiku-and-scikit-learn',
+    question: 'How is Scikit-learn used in Dataiku?',
+    answer: `### 1. Introduction/Overview
+Scikit-learn is the foundational library for classical machine learning in the Python ecosystem. Dataiku's Visual ML is built on top of it.
+
+### 2. Usage
+- **Visual ML:** When you train algorithms like Logistic Regression, Random Forest, or Gradient Boosting in the Visual ML interface, Dataiku is using the Scikit-learn implementations under the hood.
+- **Python Recipes:** You can use Scikit-learn directly in a Python recipe or notebook for full control. This allows you to build custom training workflows, use algorithms not exposed in the UI, or create complex pipelines using \`sklearn.pipeline.Pipeline\`.`,
+  },
+  {
+    id: 365,
+    slug: 'dataiku-and-xgboost',
+    question: 'How can I use XGBoost for modeling in Dataiku?',
+    answer: `### 1. Introduction/Overview
+XGBoost is a highly performant and popular implementation of gradient boosted trees.
+
+### 2. How to Use
+- **Visual ML:** XGBoost is available as a standard algorithm you can select when training a classification or regression model in the Visual ML lab. Dataiku handles the integration automatically.
+- **Python Recipe:** For more advanced use cases, you can install the \`xgboost\` library in a code environment and use it directly in a Python recipe. This gives you access to all of XGBoost's advanced features and parameters.`,
+  },
+  {
+    id: 366,
+    slug: 'dataiku-and-lightgbm',
+    question: 'How can I use LightGBM for modeling in Dataiku?',
+    answer: `### 1. Introduction/Overview
+LightGBM is another high-performance gradient boosting framework, known for its speed and efficiency.
+
+### 2. How to Use
+- **Visual ML:** LightGBM is also an available algorithm in the Visual ML lab for classification and regression tasks.
+- **Python Recipe:** You can add the \`lightgbm\` package to a code environment and use its Python API directly in a recipe for custom model training.`,
+  },
+  {
+    id: 367,
+    slug: 'dataiku-and-jupyterlab',
+    question: 'Can I use the JupyterLab interface instead of classic Jupyter notebooks in Dataiku?',
+    answer: `### 1. Introduction/Overview
+Yes. While the default is the classic Jupyter Notebook interface, administrators can enable JupyterLab for a more modern, IDE-like experience.
+
+### 2. How it Works
+- An administrator enables the JupyterLab integration in the global settings of the Dataiku instance.
+- When a user creates a new notebook, they will have the option to open it in either the classic interface or the JupyterLab interface.
+- JupyterLab provides features like a file browser, text editor, and terminal, all within the same tabbed view, which many developers prefer.`,
+  },
+  {
+    id: 368,
+    slug: 'dataiku-and-vscode-integration',
+    question: 'How do I set up the official Dataiku extension for VS Code?',
+    answer: `### 1. Introduction/Overview
+Dataiku provides an official VS Code extension for a richer remote development experience.
+
+### 2. Setup and Features
+1.  **Install Extension:** Install the "Dataiku" extension from the Visual Studio Code Marketplace.
+2.  **Connect to DSS:** Configure the extension with the URL of your Dataiku instance and an API key.
+3.  **Features:** The extension allows you to:
+    - Browse your Dataiku projects and datasets directly from VS Code's file explorer.
+    - Sync recipes and notebooks between your local machine and the Dataiku instance.
+    - Edit code locally in VS Code and have it reflect on the Dataiku instance.
+    - Run and debug recipes, with the execution happening on the Dataiku backend.
+This provides a much tighter integration than the manual Git-based workflow.`,
+  },
+  {
+    id: 369,
+    slug: 'dataiku-and-postgis',
+    question: 'How does Dataiku work with PostGIS for geospatial analysis?',
+    answer: `### 1. Introduction/Overview
+PostGIS is an extension for the PostgreSQL database that adds support for geographic objects and functions.
+
+### 2. Integration
+- When you connect Dataiku to a PostgreSQL database that has the PostGIS extension enabled, Dataiku can leverage its capabilities.
+- **Geospatial Data Types:** Dataiku can read and write PostGIS geometry types.
+- **Push-down Queries:** In a SQL recipe, you can write queries that use PostGIS's powerful geospatial functions (e.g., \`ST_Distance\`, \`ST_Intersects\`). The execution of these functions is pushed down to the database for high performance.
+- **Visual Recipes:** Some of Dataiku's visual geospatial processors in the Prepare recipe can also be translated into PostGIS functions when running in-database.`,
+  },
+  {
+    id: 370,
+    slug: 'dataiku-and-geopandas',
+    question: 'How can I use GeoPandas for geospatial analysis in a Python recipe?',
+    answer: `### 1. Introduction/Overview
+GeoPandas is a Python library that extends the datatypes used by Pandas to allow spatial operations on geometric types. It's the standard tool for geospatial analysis in Python.
+
+### 2. How to Use
+1.  **Code Environment:** Add \`geopandas\` and its dependencies to your code environment.
+2.  **Python Recipe:** In a Python recipe, you can load a dataset into a GeoPandas GeoDataFrame.
+    \`\`\`python
+    import dataiku
+    import geopandas
+
+    # Load a dataset with WKT (Well-Known Text) geometry
+    df = dataiku.Dataset("input_with_geo").get_dataframe()
+    gdf = geopandas.GeoDataFrame(
+        df, geometry=geopandas.points_from_xy(df.Longitude, df.Latitude))
+
+    # Perform geospatial operations
+    # For example, find the area of polygons or buffer points
+    gdf['area'] = gdf['geometry'].area
+    \`\`\``,
+  },
+  {
+    id: 371,
+    slug: 'dss-and-google-colab',
+    question: 'Can I use Google Colab with Dataiku?',
+    answer: `### 1. Introduction/Overview
+Yes, you can connect to your Dataiku instance from a Google Colab notebook.
+
+### 2. How to Do It
+1.  **In Colab:** Start by installing the Dataiku API client: \`!pip install dataiku-api-client\`.
+2.  **Connect to DSS:** Use the API client to connect to your Dataiku instance. It's best practice to use Colab's secret management to store your API key rather than hardcoding it.
+    \`\`\`python
+    import dataiku
+    from google.colab import userdata
+
+    host = "https://my-dss.com"
+    api_key = userdata.get('DSS_API_KEY')
+    
+    client = dataiku.api_client(host, api_key)
+    \`\`\`
+3.  **Read/Write Data:** You can now use the client to read data from a Dataiku dataset into a Pandas DataFrame, perform your analysis in Colab (e.g., to take advantage of free GPUs), and then write the results back to a new dataset in Dataiku.`,
+  },
+  {
+    id: 372,
+    slug: 'dss-and-datarobot',
+    question: 'How can Dataiku be used with DataRobot?',
+    answer: `### 1. Introduction/Overview
+Dataiku and DataRobot can be used together, with Dataiku handling the end-to-end data preparation and productionization, and DataRobot being used as a powerful AutoML engine.
+
+### 2. Integration Pattern
+1.  **Prepare Data in Dataiku:** Use a Dataiku Flow to ingest, clean, and prepare your training dataset.
+2.  **Send to DataRobot:** Use a Python recipe with the DataRobot Python client to send the prepared dataset to DataRobot and launch an Autopilot modeling project.
+3.  **Retrieve Best Model:** The recipe can then wait for the project to complete and retrieve the best model identified by DataRobot.
+4.  **Deploy and Score in Dataiku:** You can then use the DataRobot model's prediction API within a Dataiku scoring recipe to make predictions on new data as part of the operational pipeline.`,
+  },
+  {
+    id: 373,
+    slug: 'dss-and-h2o-driverless-ai',
+    question: 'How can Dataiku be used with H2O Driverless AI?',
+    answer: `### 1. Introduction/Overview
+The integration pattern with H2O Driverless AI is very similar to the one with DataRobot. Dataiku acts as the system of record and orchestration, while Driverless AI is used as a specialized, automated model-building engine.
+
+### 2. Integration Pattern
+1.  **Prepare Data in Dataiku:** Use a Dataiku Flow to prepare the training data.
+2.  **Orchestrate with Python:** Use a Python recipe and the Driverless AI Python client to upload the dataset, run an experiment, and select the best model.
+3.  **Get Scoring Pipeline:** Download the scoring pipeline (either as a MOJO or Python pipeline) from Driverless AI and store it in a Dataiku managed folder.
+4.  **Score in Dataiku:** Use another Python recipe in Dataiku to load this scoring pipeline and use it to make predictions on new data.`,
+  },
+  {
+    id: 374,
+    slug: 'dss-and-mlflow',
+    question: 'How does Dataiku integrate with MLflow?',
+    answer: `### 1. Introduction/Overview
+MLflow is an open-source platform for managing the ML lifecycle. Dataiku has its own built-in tools for this, but can also integrate with an external MLflow instance.
+
+### 2. Integration
+- **Logging to MLflow:** From a Python notebook or recipe in Dataiku, you can use the MLflow Python client to log parameters, metrics, and model artifacts to an external MLflow Tracking server.
+- **Why do this?** This pattern is useful for organizations that have already standardized on MLflow as their central model registry and want to track experiments from all sources (including Dataiku) in one place. You can still use Dataiku's powerful data preparation and pipeline orchestration features, but use MLflow for the experiment tracking and model registry part of the lifecycle.`,
+  },
+  {
+    id: 375,
+    slug: 'dss-and-kubeflow',
+    question: 'How does Dataiku integrate with Kubeflow?',
+    answer: `### 1. Introduction/Overview
+Kubeflow is an open-source ML toolkit for Kubernetes. Dataiku can integrate with it to orchestrate complex, container-based ML workflows.
+
+### 2. Integration
+- This is an advanced integration pattern.
+- From a Python recipe in Dataiku, you can use the Kubeflow Pipelines (KFP) SDK to define and launch a pipeline on a Kubeflow cluster.
+- This allows you to use Dataiku for upstream data preparation and downstream scoring, but use Kubeflow to manage a complex, multi-step training pipeline where each step runs in its own container on Kubernetes. This is useful for organizations that have heavily invested in Kubeflow for their training infrastructure.`,
   },
 ];
