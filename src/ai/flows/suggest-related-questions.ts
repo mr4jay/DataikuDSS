@@ -17,6 +17,7 @@ const allQuestionsTitles = allQuestions.map(q => q.question);
 const SuggestRelatedQuestionsInputSchema = z.object({
   currentQuestion: z.string().describe('The title of the current question.'),
   currentAnswer: z.string().describe('The answer content for the current question.'),
+  allQuestionsTitles: z.array(z.string()).describe('The list of all available question titles to choose from.'),
 });
 export type SuggestRelatedQuestionsInput = z.infer<typeof SuggestRelatedQuestionsInputSchema>;
 
@@ -25,8 +26,11 @@ const SuggestRelatedQuestionsOutputSchema = z.object({
 });
 export type SuggestRelatedQuestionsOutput = z.infer<typeof SuggestRelatedQuestionsOutputSchema>;
 
-export async function suggestRelatedQuestions(input: SuggestRelatedQuestionsInput): Promise<SuggestRelatedQuestionsOutput> {
-  return suggestRelatedQuestionsFlow(input);
+export async function suggestRelatedQuestions(input: Omit<SuggestRelatedQuestionsInput, 'allQuestionsTitles'>): Promise<SuggestRelatedQuestionsOutput> {
+  return suggestRelatedQuestionsFlow({
+    ...input,
+    allQuestionsTitles,
+  });
 }
 
 const prompt = ai.definePrompt({
@@ -47,16 +51,13 @@ Current Answer:
 ---
 
 List of all available questions to choose from:
-{{#each (jsonStringify allQuestionsTitles)}}
+{{#each allQuestionsTitles}}
 - "{{this}}"
 {{/each}}
 `,
   config: {
     model: 'googleai/gemini-1.5-flash-latest'
   },
-  context: {
-    allQuestionsTitles
-  }
 });
 
 const suggestRelatedQuestionsFlow = ai.defineFlow(
