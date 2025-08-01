@@ -1,17 +1,5 @@
 {
-  "node": {
-    "40d1719a314800b0861f52ca95bc1f1d1cb7642f79": {
-      "workers": {
-        "app/page": {
-          "moduleId": "[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/ai/flows/suggest-related-questions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
-          "async": false
-        }
-      },
-      "layer": {
-        "app/page": "action-browser"
-      }
-    }
-  },
+  "node": {},
   "edge": {},
-  "encryptionKey": "95rRB9SJd7dQO6ZkmdeEIydfs3XHbM9RdkzJapNmTx0="
+  "encryptionKey": "MJwdwFPNhptivts5JqBsW8la8Yo91ekuJcCKnnHHxS8="
 }
