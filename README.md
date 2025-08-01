@@ -7,7 +7,6 @@ This is a Next.js application for "DSS QuickStart Guides", a documentation web a
 - **Question Index**: An index page listing common questions.
 - **Search**: Real-time filtering of questions.
 - **Detailed Pages**: Static pages for each question with detailed answers.
-- **AI-Powered Suggestions**: Each question page can suggest related topics using Genkit AI.
 
 To get started, run the development server:
 
@@ -17,6 +16,4 @@ npm run dev
 
 Then open [http://localhost:9002](http://localhost:9002) with your browser to see the result.
 
-# DataikuDSS
-
-Your GitHub Pages site is available at: [https://mr4jay.github.io/DataikuDSS/](https://mr4jay.github.io/DataikuDSS/)
+This site is configured for static export and can be deployed to services like GitHub Pages.
